@@ -73,7 +73,7 @@ def url_opener(head = {
 	opener.addheaders = header
 	return opener
 	
-def read_url(url,timeout=10):
+def read_url(url,timeout=100):
 	opener = url_opener()
 	return opener.open(url, timeout = timeout).read().strip()
 	

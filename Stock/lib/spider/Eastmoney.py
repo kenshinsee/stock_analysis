@@ -13,10 +13,10 @@
 #
 
 import re,sys,pprint,copy,csv
-sys.path.append("..\\..\\")
+sys.path.append("..\\")
 reload(sys)
-sys.setdefaultencoding("gb2312")
-from module.common_tool import print_log, read_url, get_date
+sys.setdefaultencoding("gbk")
+from common_tool import print_log, read_url, get_date
 
 
 class Eastmoney:
@@ -87,27 +87,7 @@ class Eastmoney:
     def bankuai_tree(tree):
         self.__bankuai_tree = tree
     
-    @staticmethod
-    def help():
-        print u"""
-e = Eastmoney()
-# Get all the stocks under 板块->概念板块->阿里概念
-for i in e.return_stock_in_bankuai([u'板块',u'概念板块',u'阿里概念']):
-  if not isinstance(i, list):
-    print i
-  else:
-    for j in i:
-      print j[0] + "-----" + j[1]
-            
-# Get all the bankuais under 板块->概念板块, and sort by desc or asc, if the 2nd parameter is not assigned, by default it's desc, you can assign "asc" for ascending order
-for i in bk.return_bankuai_in_bankuai([u'板块',u'概念板块'], "desc"):
-  if not isinstance(i, list):
-    print i
-  else:
-    for j in i:
-      print j[0] + "*****" + j[1] + "*****" + j[6] + "*****" + j[7] + "*****" + j[8]
-        """
-    
+
     def return_url_for_bankuai_stock(self, bankuai, page=1, page_size=10000):
         bankuai_tree = self.__bankuai_tree
         def return_bankuai_code(bankuai_tree, bankuai):
@@ -214,55 +194,78 @@ for i in bk.return_bankuai_in_bankuai([u'板块',u'概念板块'], "desc"):
         out_list.append(bankuais)
         return out_list
     
+    def export_bankuai_status(self, out_file):
+        bkbk_exception = []
+        bkbkfile = open(out_file, 'wb') # open in wb is used to remove the blank lines
+        bkbkfile_writer = csv.writer(bkbkfile,quoting=csv.QUOTE_NONNUMERIC)
+        bkbk_head = [u'板块',u'子版块',u'板块名称',u'涨跌幅',u'总市值(亿)',u'换手率',u'上涨家数',u'下跌家数',u'领涨股票代码',u'领涨股票',u'领涨股票涨跌幅']
+        bkbkfile_writer.writerow(bkbk_head)
+        for bk in self.__bankuai_tree[u'板块']["children"]:
+            print_log("Start to process -->" + bk + "...")
+            parent_bk = []
+            for i in self.return_bankuai_in_bankuai([u'板块',bk]):
+                bkbk = []
+                if not isinstance(i, list):
+                    parent_bk.append(i)
+                else:
+                    for j in i:
+                        bkbk = parent_bk + j
+                        try:
+                            bkbkfile_writer.writerow(bkbk)
+                        except:
+                            if j[0] not in bkbk_exception: bkbk_exception.append(j[0])
+        bkbkfile.close()
+        if len(bkbk_exception)>0: 
+            print_log("There are " + len(bkbk_exception) + " exceptions!")
+            for i in bkbk_exception:
+                print i
+        else:
+            print_log("Completed successfully.")
+        return bkbk_exception
 
+    def export_bankuai_code(self, out_file):
+        bkst_exception = {}
+        bkstfile = open(out_file, 'wb') # open in wb is used to remove the blank lines
+        bkstfile_writer = csv.writer(bkstfile,quoting=csv.QUOTE_NONNUMERIC)
+        bkst_head = [u'板块',u'子版块',u'板块名称',u'股票代码',u'股票名称']
+        bkstfile_writer.writerow(bkst_head)
+        for sub_bk in self.__bankuai_tree[u'板块']["children"]:
+            print_log("Start to process -->" + sub_bk + "...")
+            for dtl_bk in self.__bankuai_tree[u'板块']["children"][sub_bk]["children"]:
+                print_log("Start to process -->" + sub_bk + "-->" + dtl_bk + "...")
+                parent_bk = []
+                for i in self.return_stock_in_bankuai([u'板块', sub_bk, dtl_bk]):
+                    bkst = []
+                    if not isinstance(i, list):
+                        parent_bk.append(i)
+                    else:
+                        for j in i:
+                            bkst = parent_bk + j
+                            try:
+                                bkstfile_writer.writerow(bkst)
+                            except:
+                                if not j[0] in bkst_exception: bkst_exception[j[0]] = j[1]
+        bkstfile.close()
+        if len(bkst_exception.keys())>0: 
+            print_log("There are " + str(len(bkst_exception.keys())) + " exceptions!")
+            for i in bkst_exception:
+                print i + bkst_exception[i]
+        else:
+            print_log("Completed successfully.")
+        return bkst_exception
+    
 if __name__ == "__main__":
     
     e = Eastmoney()
     today = get_date('today')
     
-    bkbk_exception = {}
-    bkbkfile_name = 'bankuai_' + today + '.csv'
-    bkbkfile = open('..\\..\\log\\' + bkbkfile_name, 'wb') # open in wb is used to remove the blank lines
-    bkbkfile_writer = csv.writer(bkbkfile,quoting=csv.QUOTE_NONNUMERIC)
-    bkbk_head = [u'板块',u'子版块',u'板块名称',u'涨跌幅',u'总市值(亿)',u'换手率',u'上涨家数',u'下跌家数',u'领涨股票代码',u'领涨股票',u'领涨股票涨跌幅']
-    bkbkfile_writer.writerow(bkbk_head)
-    for bk in e.bankuai_tree[u'板块']["children"]:
-        parent_bk = []
-        for i in e.return_bankuai_in_bankuai([u'板块',bk]):
-            bkbk = []
-            if not isinstance(i, list):
-                parent_bk.append(i)
-            else:
-                for j in i:
-                    bkbk = parent_bk + j
-                    try:
-                        bkbkfile_writer.writerow(bkbk)
-                    except:
-                        print j
-    bkbkfile.close()
+   
+    bkbkfile_name = 'bankuai_' + today + '_test.csv'
+    return_list = e.export_bankuai_status('..\\..\\log\\' + bkbkfile_name)
     
-    bkst_exception = {}
-    bkstfile_name = 'bankuai_stock_' + today + '.csv'
-    bkstfile = open('..\\..\\log\\' + bkstfile_name, 'wb') # open in wb is used to remove the blank lines
-    bkstfile_writer = csv.writer(bkstfile,quoting=csv.QUOTE_NONNUMERIC)
-    bkst_head = [u'板块',u'子版块',u'板块名称',u'股票代码',u'股票名称']
-    bkstfile_writer.writerow(bkst_head)
-    for sub_bk in e.bankuai_tree[u'板块']["children"]:
-        for dtl_bk in e.bankuai_tree[u'板块']["children"][sub_bk]["children"]:
-            parent_bk = []
-            for i in e.return_stock_in_bankuai([u'板块', sub_bk, dtl_bk]):
-                bkst = []
-                if not isinstance(i, list):
-                    parent_bk.append(i)
-                else:
-                    for j in i:
-                        bkst = parent_bk + j
-                        try:
-                            bkstfile_writer.writerow(bkst)
-                        except:
-                            if not j[0] in bkst_exception: bkst_exception[j[0]] = j[1]
+    bkstfile_name = 'bankuai_stock_' + today + '_test.csv'
+    return_dict = e.export_bankuai_code('..\\..\\log\\' + bkstfile_name)
     
-    if len(bkst_exception.keys()) > 0:
-        for i in bkst_exception:
-            print i + bkst_exception[i]
-    bkstfile.close()
+	
+	
+	

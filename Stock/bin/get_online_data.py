@@ -4,9 +4,9 @@ import sys,os,re,datetime
 sys.path.append("..\\")
 
 from optparse import OptionParser
-from module.common_tool import replace_vars, print_log, get_date
-from module.Sina_stock import Sina_stock
-from module.Yahoo_stock import Yahoo_stock
+from lib.common_tool import replace_vars, print_log, get_date
+from lib.Sina_stock import Sina_stock
+from lib.Yahoo_stock import Yahoo_stock
 
 #-- sys var
 FILE_PATH = os.getcwd()
