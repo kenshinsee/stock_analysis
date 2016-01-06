@@ -1,7 +1,7 @@
-#coding:utf-8
+# coding:utf-8
 # This class is to grab data from www.eastmoney.com
 #
-# Two main methods
+# Four main methods
 #
 # return_stock_in_bankuai
 #   input parameter: <bankuai> 
@@ -11,12 +11,20 @@
 #    input parameter: <bankuai>, <sort_direction>
 #    return: based on <sort_direction>, return bankuais in descending or ascending order
 #
+# export_bankuai_status
+#    input parameter: full path of out file
+#    out file header: [u'板块',u'子版块',u'板块名称',u'涨跌幅',u'总市值(亿)',u'换手率',u'上涨家数',u'下跌家数',u'领涨股票代码',u'领涨股票',u'领涨股票涨跌幅']
+#
+# export_bankuai_code
+#    input parameter: full path of out file
+#    out file header: [u'板块',u'子版块',u'板块名称',u'股票代码',u'股票名称']
+#
 
-import re,sys,pprint,copy,csv
+import re,sys,pprint,copy,csv,os
 sys.path.append("..\\")
 reload(sys)
 sys.setdefaultencoding("gbk")
-from common_tool import print_log, read_url, get_date
+from common_tool import print_log, read_url, get_date, return_new_name_for_existing_file
 
 
 class Eastmoney:
@@ -194,8 +202,10 @@ class Eastmoney:
         out_list.append(bankuais)
         return out_list
     
+        
     def export_bankuai_status(self, out_file):
         bkbk_exception = []
+        out_file = return_new_name_for_existing_file(out_file)
         bkbkfile = open(out_file, 'wb') # open in wb is used to remove the blank lines
         bkbkfile_writer = csv.writer(bkbkfile,quoting=csv.QUOTE_NONNUMERIC)
         bkbk_head = [u'板块',u'子版块',u'板块名称',u'涨跌幅',u'总市值(亿)',u'换手率',u'上涨家数',u'下跌家数',u'领涨股票代码',u'领涨股票',u'领涨股票涨跌幅']
@@ -225,6 +235,7 @@ class Eastmoney:
 
     def export_bankuai_code(self, out_file):
         bkst_exception = {}
+        out_file = return_new_name_for_existing_file(out_file)
         bkstfile = open(out_file, 'wb') # open in wb is used to remove the blank lines
         bkstfile_writer = csv.writer(bkstfile,quoting=csv.QUOTE_NONNUMERIC)
         bkst_head = [u'板块',u'子版块',u'板块名称',u'股票代码',u'股票名称']
@@ -258,14 +269,10 @@ if __name__ == "__main__":
     
     e = Eastmoney()
     today = get_date('today')
-    
-   
-    bkbkfile_name = 'bankuai_' + today + '_test.csv'
+    bkbkfile_name = 'bankuai_' + today + '.csv'
     return_list = e.export_bankuai_status('..\\..\\log\\' + bkbkfile_name)
     
-    bkstfile_name = 'bankuai_stock_' + today + '_test.csv'
+    bkstfile_name = 'bankuai_stock_' + today + '.csv'
     return_dict = e.export_bankuai_code('..\\..\\log\\' + bkstfile_name)
     
-	
-	
-	
+    

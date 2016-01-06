@@ -4,3 +4,4 @@
 *.egg
 *.egg-info
 Stock/log
+Stock/test_file
