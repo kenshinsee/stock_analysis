@@ -15,7 +15,7 @@
 #    input parameter: full path of out file
 #    out file header: [u'板块',u'子版块',u'板块名称',u'涨跌幅',u'总市值(亿)',u'换手率',u'上涨家数',u'下跌家数',u'领涨股票代码',u'领涨股票',u'领涨股票涨跌幅']
 #
-# export_bankuai_code
+# export_bankuai_stock
 #    input parameter: full path of out file
 #    out file header: [u'板块',u'子版块',u'板块名称',u'股票代码',u'股票名称']
 #
@@ -203,7 +203,9 @@ class Eastmoney:
         return out_list
     
         
-    def export_bankuai_status(self, out_file):
+    def export_bankuai_status(self, out_file, in_bk=[]):
+        # If in_bk parameter is not assigned, export all the bankuais
+        # in_bk could be [行业板块]
         bkbk_exception = []
         out_file = return_new_name_for_existing_file(out_file)
         bkbkfile = open(out_file, 'wb') # open in wb is used to remove the blank lines
@@ -211,6 +213,7 @@ class Eastmoney:
         bkbk_head = [u'板块',u'子版块',u'板块名称',u'涨跌幅',u'总市值(亿)',u'换手率',u'上涨家数',u'下跌家数',u'领涨股票代码',u'领涨股票',u'领涨股票涨跌幅']
         bkbkfile_writer.writerow(bkbk_head)
         for bk in self.__bankuai_tree[u'板块']["children"]:
+            if len(in_bk)>0 and bk != in_bk[0]: continue
             print_log("Start to process -->" + bk + "...")
             parent_bk = []
             for i in self.return_bankuai_in_bankuai([u'板块',bk]):
@@ -233,7 +236,9 @@ class Eastmoney:
             print_log("Completed successfully.")
         return bkbk_exception
 
-    def export_bankuai_code(self, out_file):
+    def export_bankuai_stock(self, out_file, in_bk=[]):
+        # If in_bk parameter is not assigned, export all the bankuai stocks
+        # in_bk could be [行业板块, 浙江板块] or [行业板块] 
         bkst_exception = {}
         out_file = return_new_name_for_existing_file(out_file)
         bkstfile = open(out_file, 'wb') # open in wb is used to remove the blank lines
@@ -241,8 +246,10 @@ class Eastmoney:
         bkst_head = [u'板块',u'子版块',u'板块名称',u'股票代码',u'股票名称']
         bkstfile_writer.writerow(bkst_head)
         for sub_bk in self.__bankuai_tree[u'板块']["children"]:
+            if len(in_bk)>0 and sub_bk != in_bk[0]: continue
             print_log("Start to process -->" + sub_bk + "...")
             for dtl_bk in self.__bankuai_tree[u'板块']["children"][sub_bk]["children"]:
+                if len(in_bk)>1 and dtl_bk != in_bk[1]: continue
                 print_log("Start to process -->" + sub_bk + "-->" + dtl_bk + "...")
                 parent_bk = []
                 for i in self.return_stock_in_bankuai([u'板块', sub_bk, dtl_bk]):
@@ -273,6 +280,6 @@ if __name__ == "__main__":
     return_list = e.export_bankuai_status('..\\..\\log\\' + bkbkfile_name)
     
     bkstfile_name = 'bankuai_stock_' + today + '.csv'
-    return_dict = e.export_bankuai_code('..\\..\\log\\' + bkstfile_name)
+    return_dict = e.export_bankuai_stock('..\\..\\log\\' + bkstfile_name)
     
     
