@@ -1,3 +1,4 @@
+#!/usr/local/bin/python2.7
 # coding:utf-8
 # This class is to grab data from www.eastmoney.com
 #
@@ -21,7 +22,6 @@
 #
 
 import re,sys,pprint,copy,csv,os
-sys.path.append("..\\")
 reload(sys)
 sys.setdefaultencoding("gbk")
 from common_tool import print_log, read_url, get_date, return_new_name_for_existing_file
@@ -273,13 +273,15 @@ class Eastmoney:
         return bkst_exception
     
 if __name__ == "__main__":
-    
+
     e = Eastmoney()
     today = get_date('today')
+    
     bkbkfile_name = 'bankuai_' + today + '.csv'
-    return_list = e.export_bankuai_status('..\\..\\log\\' + bkbkfile_name)
-    
+    #return_list = e.export_bankuai_status('D:\\workspace\\Stock\\log\\' + bkbkfile_name)
+    return_list = e.export_bankuai_status('/app/dw/script/python/' + bkbkfile_name)
+	
     bkstfile_name = 'bankuai_stock_' + today + '.csv'
-    return_dict = e.export_bankuai_stock('..\\..\\log\\' + bkstfile_name)
-    
+    #return_dict = e.export_bankuai_stock('D:\\workspace\\Stock\\log\\' + bkstfile_name)
+    return_dict = e.export_bankuai_stock('/app/dw/script/python/' + bkstfile_name)
     

@@ -1,17 +1,17 @@
+#!/usr/local/bin/python2.7
 #coding:utf-8
 
 import sys,os,re,datetime
-sys.path.append("..\\")
 
 from optparse import OptionParser
-from lib.common_tool import replace_vars, print_log, get_date
-from lib.Sina_stock import Sina_stock
-from lib.Yahoo_stock import Yahoo_stock
+from common_tool import replace_vars, print_log, get_date
+from Sina_stock import Sina_stock
+from Yahoo_stock import Yahoo_stock
 
 #-- sys var
 FILE_PATH = os.getcwd()
 FILE_BASE_NAME = __file__
-FILE_NAME = FILE_PATH + "\\" + FILE_BASE_NAME
+FILE_NAME = FILE_PATH + "/" + FILE_BASE_NAME
 today = get_date("today")
 yesterday = get_date("yesterday")
 mode = ""
