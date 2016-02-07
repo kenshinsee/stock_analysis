@@ -44,7 +44,8 @@ create table dw.dim_bankuai(
   id serial primary key,
   name varchar(16) not null,
   parent_bankuai_id integer not null,
-  upd_time timestamp
+  upd_time timestamp,
+  is_valid varchar(1) --Y/N
 );
 create index uidx_bankuai_nm on dw.dim_bankuai(name);
 alter table dw.dim_bankuai add constraint fk_parent_bankuai_id foreign key(parent_bankuai_id) references dw.dim_parent_bankuai(id);
@@ -61,7 +62,7 @@ create table dw.dim_stock_bankuai(
   stock_id integer not null,
   bankuai_id integer not null,
   upd_time timestamp,
-  is_valid varchar(1) -- Y/N
+  is_valid varchar(1) --Y/N
 );
 alter table dw.dim_stock_bankuai add constraint fk_stock_id foreign key(stock_id) references dw.dim_stock(id);
 alter table dw.dim_stock_bankuai add constraint fk_bankuai_id foreign key(bankuai_id) references dw.dim_bankuai(id);
