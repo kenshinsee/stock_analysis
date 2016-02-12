@@ -5,4 +5,4 @@
 *.egg-info
 Stock/log
 Stock/test_file
-Stock/pluggin
+Stock/package
