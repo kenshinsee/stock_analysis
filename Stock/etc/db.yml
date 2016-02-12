@@ -1,0 +1,9 @@
+DB: StockDb
+User_name: stock
+Password: stock
+Tables:
+  - dim_parent_bankuai: dw.dim_parent_bankuai
+  - dim_bankuai: dw.dim_bankuai
+  - dim_stock: dw.dim_stock
+  - dim_stock_bankuai: dw.dim_stock_bankuai
+  - bankuai: dw.bankuai
