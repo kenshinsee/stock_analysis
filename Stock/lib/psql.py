@@ -19,10 +19,14 @@ if __name__ == "__main__":
 	conn = get_conn("StockDb", "hong", "hong", "192.168.119.128", "5432")
 	dict_cur = get_cur(conn)
 	dict_cur.execute("SELECT * FROM DW.DIM_PARENT_BANKUAI")
-	result = dict_cur.fetchall()
-	print result[0]["name"].decode("utf-8")
-	dict_cur.execute("""INSERT INTO DW.DIM_PARENT_BANKUAI(ID, NAME, UPD_TIME) VALUES (%(id)s, %(name)s, %(upd_time)s)""",  
-     {'id': 10, 'name': "test", 'upd_time': now} )
+	rows = list(dict_cur)
+	print rows
+	#print dict_cur.description
+	
+	
+	#result = dict_cur.fetchall()
+	#print result[0]["name"].decode("utf-8")
+	#dict_cur.execute("""INSERT INTO DW.DIM_PARENT_BANKUAI(ID, NAME, UPD_TIME) VALUES (%(id)s, %(name)s, %(upd_time)s)""", {'id': 10, 'name': "test", 'upd_time': now} )
 	conn.commit()
 	dict_cur.close()
 	conn.close()

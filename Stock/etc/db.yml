@@ -1,5 +1,5 @@
 DB: StockDb
-Host: 192.168.122.131
+Host: 192.168.119.128
 Port: 5432
 Username: hong
 Password: hong

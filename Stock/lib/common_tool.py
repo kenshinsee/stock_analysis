@@ -46,18 +46,18 @@ class bcolors:
     
 #-- print log  func
 def print_log(msg):
-    # type=1: normal log
-    # type=2: warning log
-    # type=3: error log
-    type_color = {
-        1: "OKGREEN",
-        2: "WARNING",
-        3: "FAIL",
-    }
     now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    print "[" + now + "]", msg
+    print bcolors.OKGREEN + "[" + now + "] " + msg + bcolors.ENDC
 
+def warn_log(msg):
+    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print bcolors.WARNING + "[" + now + "] " + msg + bcolors.ENDC
 
+def error_log(msg):
+    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print bcolors.FAIL + "[" + now + "] " + msg + bcolors.ENDC
+
+	
 def url_opener(head = {
     'Connection': 'keep-alive',    
     'Accept': 'text/html, application/xhtml+xml, */*',
