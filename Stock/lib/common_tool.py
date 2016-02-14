@@ -1,4 +1,4 @@
-import sys,os,re,datetime,cookielib,urllib,urllib2
+import sys,os,re,datetime,cookielib,urllib,urllib2,yaml
 
 def replace_vars(str, map):
     out_str = str
@@ -84,6 +84,12 @@ def return_new_name_for_existing_file(file):
         r_obj = re.search(r'(?P<file_name>.+)\.(?P<ext>[^\.]+)$', file)
         file = r_obj.group("file_name") + '_1.' + r_obj.group("ext")
     return file
-    
+
+def get_yaml(yml_file):
+	f = open(yml_file)
+	y = yaml.load(f)
+	f.close()
+	return y
+	
 if __name__ == "__main__":
     print get_date("theDayAfterTomorrow", is_iso=True, is_date=True)

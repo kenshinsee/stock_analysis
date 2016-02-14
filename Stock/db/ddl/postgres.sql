@@ -52,14 +52,15 @@ alter table dw.dim_bankuai add constraint fk_parent_bankuai_id foreign key(paren
 
 -- stock table
 create table dw.dim_stock(
-  id integer primary key,
+  id varchar(6) primary key,
   name varchar(16) not null,
-  upd_time timestamp
+  upd_time timestamp,
+  is_valid varchar(1)
 );
 
 -- bridge table for stock and bankuai
 create table dw.dim_stock_bankuai(
-  stock_id integer not null,
+  stock_id varchar(6) not null,
   bankuai_id integer not null,
   upd_time timestamp,
   is_valid varchar(1) --Y/N
@@ -79,7 +80,7 @@ create table dw.bankuai(
   turnover_rate decimal(5,2),
   num_of_rise integer,
   num_of_drop integer,
-  leading_stock_id integer,
+  leading_stock_id varchar(6),
   rise_of_leading_stock decimal(10,2)
 );
 create index uidx_bankuai_dt_id on dw.bankuai(biz_date, bankuai_id);
