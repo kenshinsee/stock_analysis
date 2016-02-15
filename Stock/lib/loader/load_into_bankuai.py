@@ -5,7 +5,7 @@ import sys,os,re,datetime,yaml,csv
 from common_tool import replace_vars, print_log, warn_log, error_log, get_date, get_yaml
 from psql import get_conn, get_cur
 
-def load_into_bankuai(db_conn, file, parent_bankuai_ids ):
+def load_into_bankuai(db_conn, file, parent_bankuai_ids={u'概念板块': 1, u'地域板块': 2, u'行业板块': 3} ):
 	#-- load CSV
 	csvf = open(file)
 	csvr = csv.DictReader(csvf)

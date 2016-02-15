@@ -13,8 +13,7 @@ def load_into_stock(db_conn, file ):
 	codes_to_update = {}
 	codes_to_valid = []
 	codes_to_invalid = []
-	#---- get parent_bankuai_id, bankuai_name from csv
-	#
+
 	# 板块	子版块		板块名称	股票代码	股票名称
 	# 板块	概念板块	送转预期	600587		新华医疗
 	for row in csvr:
