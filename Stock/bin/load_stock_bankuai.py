@@ -34,8 +34,8 @@ files_to_load = {}
 
 #-- opts
 parser = OptionParser()
-parser.add_option("--start_date", "-s", dest="start_date", action="store", type="string", default=yesterday, help="Start date of the date range, e.g. 20150101")
-parser.add_option("--end_date", "-e", dest="end_date", action="store", type="string", default=yesterday, help="End date of the date range, e.g. 20150101")
+parser.add_option("--start_date", "-s", dest="start_date", action="store", type="string", default=today, help="Start date of the date range, e.g. 20150101")
+parser.add_option("--end_date", "-e", dest="end_date", action="store", type="string", default=today, help="End date of the date range, e.g. 20150101")
 parser.add_option("--type", "-t", dest="type", action="store", type="string", help="bankuai|bankuai_stock")
 parser.add_option("--in_file", "-f", dest="in_file", action="store", type="string", help="To load a specific file, $DATE would be replaced from --start_date and --end_date")
 (options, args) = parser.parse_args()
@@ -122,12 +122,14 @@ parent_bankuai_ids = return_parent_bankuai_ids(conn)
 
 #------------------------------------------- LOADing
 #-- load into dim_bankuai
-for f in files_to_load["bankuai"]:
-	load_into_bankuai(conn, f, parent_bankuai_ids)
+if "bankuai" in files_to_load:
+	for f in files_to_load["bankuai"]:
+		load_into_bankuai(conn, f, parent_bankuai_ids)
 
 #-- load into dim_stock
-for f in files_to_load["bankuai_stock"]:
-	load_into_stock(conn, f)
+if "bankuai_stock" in files_to_load:
+	for f in files_to_load["bankuai_stock"]:
+		load_into_stock(conn, f)
 
 conn.close()
 
