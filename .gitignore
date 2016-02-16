@@ -3,5 +3,6 @@
 *.so
 *.egg
 *.egg-info
-Stock/log
+*.csv
+*.log
 Stock/package

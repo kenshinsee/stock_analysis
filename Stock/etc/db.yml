@@ -28,7 +28,8 @@ Tables:
       - id
       - name
       - upd_time
-
+      - is_valid
+  
   dim_stock_bankuai: 
     name: dw.dim_stock_bankuai
     columns: 

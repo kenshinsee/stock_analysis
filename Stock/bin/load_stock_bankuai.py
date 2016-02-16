@@ -8,6 +8,7 @@ from common_tool import replace_vars, print_log, warn_log, error_log, get_date, 
 from psql import get_conn, get_cur
 from loader.load_into_bankuai import load_into_bankuai
 from loader.load_into_stock import load_into_stock
+from loader.load_into_stock_bankuai import load_into_stock_bankuai
 
 #-- sys var
 SEP = os.path.sep
@@ -20,10 +21,28 @@ DATA_DIR = PROJ_BASE_DIR + SEP + "data"
 LOG_DIR = PROJ_BASE_DIR + SEP + "log"
 DB_YML = YML_DIR + SEP + "db.yml"
 
-type_file_mapping = {
-	"bankuai": [LOG_DIR + SEP + "bankuai_$DATE.csv"], 
-	"bankuai_stock": [LOG_DIR + SEP + "bankuai_stock_$DATE.csv"]
+table_mapping = {
+	"dim_bankuai": {
+		"load_seq": 1, 
+		"func_name": "load_into_bankuai", 
+		"param": "conn, '$f'",
+		"file": [DATA_DIR + SEP + "bankuai_$DATE.csv"]}, 
+	"dim_stock": {
+		"load_seq": 2, 
+		"func_name": "load_into_stock", 
+		"param": "conn, '$f'",
+		"file": [DATA_DIR + SEP + "bankuai_stock_$DATE.csv"]}, 
+	"dim_stock_bankuai": {
+		"load_seq": 3, 
+		"func_name": "load_into_stock_bankuai", 
+		"param": "conn, '$f'",
+		"file": [DATA_DIR + SEP + "bankuai_stock_$DATE.csv"]}, 
 }
+#-- file load seq, based on load_seq in table_mapping, put table names into load_seq_tables in a sorted order
+load_seq_mapping = {}
+for i in table_mapping:
+	load_seq_mapping[table_mapping[i]["load_seq"]] = i
+load_seq_tables = [load_seq_mapping[i] for i in load_seq_mapping]
 
 today = get_date("today")
 yesterday = get_date("yesterday")
@@ -36,7 +55,7 @@ files_to_load = {}
 parser = OptionParser()
 parser.add_option("--start_date", "-s", dest="start_date", action="store", type="string", default=today, help="Start date of the date range, e.g. 20150101")
 parser.add_option("--end_date", "-e", dest="end_date", action="store", type="string", default=today, help="End date of the date range, e.g. 20150101")
-parser.add_option("--type", "-t", dest="type", action="store", type="string", help="bankuai|bankuai_stock")
+parser.add_option("--table", "-t", dest="table", action="store", type="string", help="dim_bankuai|dim_stock|dim_stock_bankuai")
 parser.add_option("--in_file", "-f", dest="in_file", action="store", type="string", help="To load a specific file, $DATE would be replaced from --start_date and --end_date")
 (options, args) = parser.parse_args()
 
@@ -80,21 +99,22 @@ elif start_date > end_date:
 
 #-- determine file to load, $DATE is not replaced
 if options.in_file is None:
-	if options.type is None:
-		files_to_load = type_file_mapping
-	elif options.type in type_file_mapping:
-		files_to_load = {options.type: type_file_mapping[options.type]}
+	if options.table is None:
+		for tab in table_mapping:
+			files_to_load[tab] = table_mapping[tab]["file"]
+	elif options.table in table_mapping:
+		files_to_load = {options.table: table_mapping[options.table]["file"]}
 	else: 
-		error_log("type is not correct! [" + options.type + "]")
+		error_log("table is not correct! [" + options.table + "]")
 		exit_process()
 else:
-	if options.type in type_file_mapping:
-		files_to_load = {options.type: [options.in_file]}
+	if options.table in table_mapping:
+		files_to_load = {options.table: [options.in_file]}
 	else:
-		error_log("type is not correct! [" + options.type + "]")
+		error_log("table is not correct! [" + options.table + "]")
 		exit_process()
 
-#-- replace $DATE
+#-- replace $DATE, it will check the existence of files, if file doesn't exist, it wouldn't be added to the loading list
 start_dt_dt = datetime.datetime.strptime(start_date, "%Y%m%d")
 end_dt_dt = datetime.datetime.strptime(end_date, "%Y%m%d")
 
@@ -121,15 +141,12 @@ conn = get_conn(db_dict["DB"], db_dict["Username"], db_dict["Password"], db_dict
 parent_bankuai_ids = return_parent_bankuai_ids(conn)
 
 #------------------------------------------- LOADing
-#-- load into dim_bankuai
-if "bankuai" in files_to_load:
-	for f in files_to_load["bankuai"]:
-		load_into_bankuai(conn, f, parent_bankuai_ids)
-
-#-- load into dim_stock
-if "bankuai_stock" in files_to_load:
-	for f in files_to_load["bankuai_stock"]:
-		load_into_stock(conn, f)
+for t in load_seq_tables:
+	if t in files_to_load:
+		for f in files_to_load[t]:
+			cmd = "%(func_name)s(%(param)s)" % {"func_name": table_mapping[t]["func_name"], "param": table_mapping[t]["param"]}
+			cmd_with_filename = cmd.replace("$f", f.replace('\\', '\\\\')) # replace \\ with \\\\ is just for windows platform, unix/linux platform won't be impacted
+			eval(cmd_with_filename)
 
 conn.close()
 
