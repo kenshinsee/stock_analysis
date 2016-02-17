@@ -5,7 +5,7 @@ import sys,os,re,datetime,yaml,csv
 from common_tool import replace_vars, print_log, warn_log, error_log, get_date, get_yaml
 from psql import get_conn, get_cur
 
-def load_into_stock(db_conn, file ):
+def load_into_dim_stock(db_conn, file ):
 	#-- load CSV
 	csvf = open(file)
 	csvr = csv.DictReader(csvf)

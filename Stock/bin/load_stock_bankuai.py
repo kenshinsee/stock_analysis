@@ -6,9 +6,9 @@ import sys,os,re,datetime,csv
 from optparse import OptionParser
 from common_tool import replace_vars, print_log, warn_log, error_log, get_date, get_yaml
 from psql import get_conn, get_cur
-from loader.load_into_bankuai import load_into_bankuai
-from loader.load_into_stock import load_into_stock
-from loader.load_into_stock_bankuai import load_into_stock_bankuai
+from loader.load_into_dim_bankuai import load_into_dim_bankuai
+from loader.load_into_dim_stock import load_into_dim_stock
+from loader.load_into_dim_stock_bankuai import load_into_dim_stock_bankuai
 
 #-- sys var
 SEP = os.path.sep
@@ -24,17 +24,17 @@ DB_YML = YML_DIR + SEP + "db.yml"
 table_mapping = {
 	"dim_bankuai": {
 		"load_seq": 1, 
-		"func_name": "load_into_bankuai", 
+		"func_name": "load_into_dim_bankuai", 
 		"param": "conn, '$f'",
 		"file": [DATA_DIR + SEP + "bankuai_$DATE.csv"]}, 
 	"dim_stock": {
 		"load_seq": 2, 
-		"func_name": "load_into_stock", 
+		"func_name": "load_into_dim_stock", 
 		"param": "conn, '$f'",
 		"file": [DATA_DIR + SEP + "bankuai_stock_$DATE.csv"]}, 
 	"dim_stock_bankuai": {
 		"load_seq": 3, 
-		"func_name": "load_into_stock_bankuai", 
+		"func_name": "load_into_dim_stock_bankuai", 
 		"param": "conn, '$f'",
 		"file": [DATA_DIR + SEP + "bankuai_stock_$DATE.csv"]}, 
 }
