@@ -138,7 +138,7 @@ db_dict = get_yaml(DB_YML)
 conn = get_conn(db_dict["DB"], db_dict["Username"], db_dict["Password"], db_dict["Host"], db_dict["Port"])
 
 #-- get the dict of parent bankuai id and name
-parent_bankuai_ids = return_parent_bankuai_ids(conn)
+#parent_bankuai_ids = return_parent_bankuai_ids(conn)
 
 #------------------------------------------- LOADing
 for t in load_seq_tables:

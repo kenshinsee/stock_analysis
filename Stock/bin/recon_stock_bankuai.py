@@ -75,6 +75,7 @@ if options.type is None:
 elif not options.type in file_db_recon:
 	error_log("type is not correct! [" + options.type + "]")
 	exit_process()
+	
 
 #-- determine the file name for reconcilation
 max_date = ""
@@ -94,6 +95,7 @@ else:
 	else:
 		file_to_recon = options.in_file
 		
+		
 #-- fetch DB info
 db_dict = get_yaml(DB_YML)
 
@@ -104,65 +106,46 @@ conn = get_conn(db_dict["DB"], db_dict["Username"], db_dict["Password"], db_dict
 csvf = open(file_to_recon)
 csvr = csv.DictReader(csvf)
 
-if options.type == "bankuai":
-	# csv
-	print_log("Start to read csv...")
-	for row in csvr:
-		pb_name = row[u'子版块'.encode("gbk")].decode("gbk")
-		bk_name = row[u'板块名称'.encode("gbk")].decode("gbk")
-		csv_dict[pb_name + "-" + bk_name] = ""
-	print_log("dict for csv done.")
-	
-	# db
-	print_log("Start to read db...")
-	select_sql = file_db_recon[options.type]["sql"]
-	cur = get_cur(conn)
-	cur.execute(select_sql)
-	db_rows = list(cur)
-	for db_row in db_rows:
-		db_pb_name = db_row["pb_name"].decode("utf-8")
-		db_bk_name = db_row["bk_name"].decode("utf-8")
-		dbsql_dict[db_pb_name + "-" + db_bk_name] = ""
-	print_log("dict for db done.")
-	
-elif options.type == "stock_bankuai":
-	# csv
-	print_log("Start to read csv...")
-	for row in csvr:
-		pb_name = row[u'子版块'.encode("gbk")].decode("gbk")
-		bk_name = row[u'板块名称'.encode("gbk")].decode("gbk")
-		st_id = row[u'股票代码'.encode("gbk")].decode("gbk")
-		csv_dict[pb_name + "-" + bk_name + "-" + st_id] = ""
-	print_log("dict for csv done.")
-	
-	# db
-	print_log("Start to read db...")
-	select_sql = file_db_recon[options.type]["sql"]
-	cur = get_cur(conn)
-	cur.execute(select_sql)
-	db_rows = list(cur)
-	for db_row in db_rows:
-		db_pb_name = db_row["pb_name"].decode("utf-8")
-		db_bk_name = db_row["bk_name"].decode("utf-8")
-		db_st_id = db_row["stock_id"].decode("utf-8")
-		dbsql_dict[db_pb_name + "-" + db_bk_name + "-" + db_st_id ] = ""
-	print_log("dict for db done.")
-
-
+#-- building dict for csv
+# based on the list of recon_fields_in_file, read the corresponding fields in csv and concatenate them together as a PK
+print_log("Start to read csv...")
+for row in csvr:
+	key = []
+	for i in range(len(file_db_recon[options.type]["recon_fields_in_file"])):
+		field = file_db_recon[options.type]["recon_fields_in_file"][i]
+		key.append(row[field.encode("gbk")].decode("gbk"))
+	csv_dict["-".join(key)] = ""
+print_log("dict for csv done.")
 csvf.close()
+
+#-- building dict for db
+# based on the list of recon_fields_in_db, read the corresponding fields in db and concatenate them together as a PK
+print_log("Start to read db...")
+select_sql = file_db_recon[options.type]["sql"]
+cur = get_cur(conn)
+cur.execute(select_sql)
+db_rows = list(cur)
+for row in db_rows:
+	key = []
+	for i in range(len(file_db_recon[options.type]["recon_fields_in_db"])):
+		field = file_db_recon[options.type]["recon_fields_in_db"][i]
+		key.append(row[field].decode("utf-8"))
+	dbsql_dict["-".join(key)] = ""
+print_log("dict for db done.")
 conn.close()
 
 
-
-
-
 #------------------------------------------- RECONing
-copy_csv_dict = csv_dict.copy()
-for csv_key in copy_csv_dict:
+print_log("Recon starting >>>")
+csv_dict_keys = csv_dict.keys()
+# iterate keys in csv dict, if it is found in db dict, remove it from both dict
+# the keys remaining in csv dict are the ones not found in db dict, vise versa
+for csv_key in csv_dict_keys:
 	if csv_key in dbsql_dict:
 		del csv_dict[csv_key]
 		del dbsql_dict[csv_key]
-	
+
+# print out the keys remaining in csv dict
 if len(csv_dict.keys()) > 0:
 	error_log("There are %(num)s records missing from db" % {"num": len(csv_dict.keys())})
 	error_log("-".join(file_db_recon[options.type]["recon_fields_in_file"]))
@@ -171,7 +154,7 @@ if len(csv_dict.keys()) > 0:
 else:
 	print_log("csv data is all in db")
 
-	
+# print out the keys remaining in db dict
 if len(dbsql_dict.keys()) > 0:
 	error_log("There are %(num)s records missing from csv" % {"num": len(dbsql_dict.keys())})
 	error_log("-".join(file_db_recon[options.type]["recon_fields_in_db"]))
@@ -180,5 +163,6 @@ if len(dbsql_dict.keys()) > 0:
 else:
 	print_log("db data is all in csv")
 	
-	
+print_log("<<< Recon ended ")
+
 	
