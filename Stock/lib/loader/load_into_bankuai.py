@@ -5,7 +5,7 @@ import sys,os,re,datetime,yaml,csv
 from common_tool import replace_vars, print_log, warn_log, error_log, get_date, get_yaml
 from psql import get_conn, get_cur
 
-def load_into_stock_bankuai(db_conn, file ):
+def load_into_bankuai(db_conn, file ):
 	#-- load CSV
 	csvf = open(file)
 	csvr = csv.DictReader(csvf)
@@ -16,8 +16,10 @@ def load_into_stock_bankuai(db_conn, file ):
 	codes_to_valid = []
 	codes_to_invalid = []
 	
-	# 板块	子版块		板块名称	股票代码	股票名称
-	# 板块	概念板块	送转预期	600587		新华医疗
+# 板块	子版块		板块名称	涨跌幅	总市值(亿)	换手率	上涨家数	下跌家数	领涨股票代码	领涨股票	领涨股票涨跌幅
+# 板块	概念板块	全息技术	3.95%	365.12		11.65	7			1			600288			大恒科技	10.03
+# 板块	概念板块	网络安全	2.95%	818.79		25.61	19			1			002308			威创股份	10.01
+
 	for row in csvr:
 		bk_name = row[u'板块名称'.encode("gbk")].decode("gbk")
 		st_id = row[u'股票代码'.encode("gbk")].decode("gbk")

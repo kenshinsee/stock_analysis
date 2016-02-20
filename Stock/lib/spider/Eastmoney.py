@@ -275,6 +275,7 @@ class Eastmoney:
 if __name__ == "__main__":
 
     e = Eastmoney()
+    
     today = get_date('today')
     
     bkbkfile_name = 'bankuai_' + today + '.csv'
