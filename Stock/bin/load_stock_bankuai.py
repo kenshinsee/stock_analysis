@@ -9,10 +9,12 @@ from psql import get_conn, get_cur
 from loader.load_into_dim_bankuai import load_into_dim_bankuai
 from loader.load_into_dim_stock import load_into_dim_stock
 from loader.load_into_dim_stock_bankuai import load_into_dim_stock_bankuai
+from loader.load_into_bankuai import load_into_bankuai
 
 #-- sys var
 SEP = os.path.sep
-FILE_PATH = os.getcwd()
+#FILE_PATH = os.getcwd()
+FILE_PATH = sys.path[0]
 FILE_BASE_NAME = __file__
 FILE_NAME = FILE_PATH + SEP + FILE_BASE_NAME
 PROJ_BASE_DIR = FILE_PATH + SEP + ".."
@@ -37,6 +39,11 @@ table_mapping = {
 		"func_name": "load_into_dim_stock_bankuai", 
 		"param": "conn, '$f'",
 		"file": [DATA_DIR + SEP + "bankuai_stock_$DATE.csv"]}, 
+	"bankuai": {
+		"load_seq": 4, 
+		"func_name": "load_into_bankuai", 
+		"param": "conn, '$f'",
+		"file": [DATA_DIR + SEP + "bankuai_$DATE.csv"]}, 
 }
 #-- file load seq, based on load_seq in table_mapping, put table names into load_seq_tables in a sorted order
 load_seq_mapping = {}
@@ -55,7 +62,7 @@ files_to_load = {}
 parser = OptionParser()
 parser.add_option("--start_date", "-s", dest="start_date", action="store", type="string", default=today, help="Start date of the date range, e.g. 20150101")
 parser.add_option("--end_date", "-e", dest="end_date", action="store", type="string", default=today, help="End date of the date range, e.g. 20150101")
-parser.add_option("--table", "-t", dest="table", action="store", type="string", help="dim_bankuai|dim_stock|dim_stock_bankuai")
+parser.add_option("--table", "-t", dest="table", action="store", type="string", help="dim_bankuai|dim_stock|dim_stock_bankuai|bankuai")
 parser.add_option("--in_file", "-f", dest="in_file", action="store", type="string", help="To load a specific file, $DATE would be replaced from --start_date and --end_date")
 (options, args) = parser.parse_args()
 

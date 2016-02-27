@@ -11,6 +11,7 @@ class DB_insert_update():
 	__csv_dict = {}
 	# __db_dict = {pk1: {main:{{f1: {value: a}}, {f2: {value: a}}, ...}, action: xxx}, ...}
 	__db_dict = {}
+	
 	def __init__(self, csv_file, csv_pk, csv_ins, db_conn, db_tab, db_pk, db_ins, is_valid_enable='Y', upd_time_enable='Y', csv_upd=[], field_conversion={}, db_upd=[]):
 		# csv_file: full name of csv file 
 		# csv_pk: [ pk1, pk2 ] pk in csv
@@ -28,6 +29,12 @@ class DB_insert_update():
 		__csvf = open(csv_file)
 		__csvr = csv.DictReader(__csvf)
 		
+		self.__is_valid_enable = is_valid_enable
+		self.__upd_time_enable = upd_time_enable
+		self.__csv_upd = csv_upd
+		self.__field_conversion = field_conversion
+		self.__db_upd = db_upd
+		
 		for row in __csvr:
 			pk = []
 			pv = ''
@@ -38,13 +45,13 @@ class DB_insert_update():
 					pv_converted = field_conversion[p][pv]
 				else:
 					pv_converted = pv
-				pk.append(pv_converted)
+				pk.append(str(pv_converted))
 			pk_concatenated = '|'.join(pk)
 			
 			# building __csv_dict for the row
+			self.__csv_dict[pk_concatenated] = {}
+			self.__csv_dict[pk_concatenated]["main"] = {}
 			for f in csv_ins: # unicode
-				self.__csv_dict[pk_concatenated] = {}
-				self.__csv_dict[pk_concatenated]["main"] = {}
 				self.__csv_dict[pk_concatenated]["main"][f] = {}
 				pv = row[f.encode('gbk')].decode('gbk')
 				if f in field_conversion: # if it needs to be converted
@@ -75,9 +82,9 @@ class DB_insert_update():
 			pk_concatenated = '|'.join(pk)
 
 			# building __db_dict for the row
+			self.__db_dict[pk_concatenated] = {}
+			self.__db_dict[pk_concatenated]["main"] = {}
 			for f in db_ins: # unicode
-				self.__db_dict[pk_concatenated] = {}
-				self.__db_dict[pk_concatenated]["main"] = {}
 				self.__db_dict[pk_concatenated]["main"][f] = {}
 				pv = str(db_row[f.encode('utf-8')]).decode('utf-8')
 				self.__db_dict[pk_concatenated]["main"][f]['value'] = pv
@@ -99,25 +106,25 @@ class DB_insert_update():
 	# 1		0	X			X				insert
 	# 0		1	1			X				is_valid->N
 	# 0		1	0			X				none
-		cloned_csv_dict = self.__csv_dict.deepcopy() # deep copy csv dict used to iterate values, because the original csv dict may be updated 
+		cloned_csv_dict = self.__csv_dict.copy() # copy csv dict used to iterate values, because the original csv dict may be updated 
 		for r in cloned_csv_dict:
 			actions = [] # UPD, INS, IS_VALID_TO_Y, IS_VALID_TO_N, or blank
 			if r in self.__db_dict: # exists in db
 				#-- check fields update
-				if len(csv_upd) >0 and len(csv_upd) == len(db_upd): # need to check fields if they're updated
+				if len(self.__csv_upd) >0 and len(self.__csv_upd) == len(self.__db_upd): # need to check fields if they're updated
 					csv_upd_value = []
 					db_upd_value = []
-					for c in csv_upd:
+					for c in self.__csv_upd:
 						csv_upd_value.append(self.__csv_dict[r]['main'][c]['value'])
-					for d in db_upd:
+					for d in self.__db_upd:
 						db_upd_value.append(self.__db_dict[r]['main'][c]['value'])
 					if '|'.join(csv_upd_value) != '|'.join(db_upd_value):
 						actions.append('UPD')
-				elif len(csv_upd) != len(db_upd): # if length of csv_upd and db_upd are not same, raise error
-					raise RuntimeError("The length of csv_upd and db_upd are not same. [" + ', '.join(csv_upd) + "], [" + ', '.join(db_upd) + "]) 
+				elif len(self.__csv_upd) != len(self.__db_upd): # if length of csv_upd and db_upd are not same, raise error
+					raise RuntimeError("The length of csv_upd and db_upd are not same. [" + ', '.join(self.__csv_upd) + "], [" + ', '.join(self.__db_upd) + "]") 
 					
 				#-- check is_valid flag
-				if is_valid_enable = 'Y': # need to check is_valid flag
+				if self.__is_valid_enable == 'Y': # need to check is_valid flag
 					if self.__db_dict[r]['main']['is_valid']['value'] == 'N':
 						actions.append('IS_VALID_TO_Y') # if is_valid=N in db, mark it Y
 					elif self.__db_dict[r]['main']['is_valid']['value'] == 'Y' and (not 'UPD' in actions): # if is_valid=Y in db and no field update, no action required, delete key from both dict
@@ -128,34 +135,51 @@ class DB_insert_update():
 			
 			# r may be delete from process above, so check existence first
 			if r in self.__csv_dict:
-				self.__csv_dict[r]['action'] == actions
+				self.__csv_dict[r]['action'] = actions
+			#print r, '|'.join(actions)
 			
-		cloned_db_dict = self.__db_dict.deepcopy()
+		cloned_db_dict = self.__db_dict.copy()
 		for r in cloned_db_dict:
 			if not r in self.__csv_dict:
-				if 'is_valid' in self.__db_dict[r]['main'] and self.__db_dict[r]['main']['is_valid']['value'] == 'Y'：
+				if 'is_valid' in self.__db_dict[r]['main'] and self.__db_dict[r]['main']['is_valid']['value'] == 'Y':
 					actions.append('IS_VALID_TO_N')
 				else:
 					del self.__db_dict[r]
 					
 			# r may be delete from process above, so check existence first
 			if r in self.__db_dict:
-				self.__db_dict[r]['action'] == actions
-				
+				self.__db_dict[r]['action'] = actions
+			#print r, '|'.join(actions)
+
 if __name__ == '__main__':
 	db_dict = get_yaml('D:\\workspace\\Stock\\etc\\db.yml')
 	conn = get_conn(db_dict["DB"], db_dict["Username"], db_dict["Password"], db_dict["Host"], db_dict["Port"])
 	
+	select_sql = "select t.name, t.id from dw.dim_bankuai t"
+	cur = get_cur(conn)
+	cur.execute(select_sql)
+	db_rows = list(cur)
+	bk_id_dict = {}
+	for db_row in db_rows:
+		db_name = db_row["name"].decode("utf-8")
+		db_id = db_row["id"]
+		bk_id_dict[db_name] = db_id	
+	 
 	d = DB_insert_update(
-		csv_file='D:\\workspace\\Stock\\data\\bankuai_20160219.csv', 
+		csv_file='D:\\workspace\\Stock\\data\\bankuai_20160223_Copy.csv', 
 		csv_pk=[u'板块名称'], 
 		csv_ins={u'子版块': 'char', u'板块名称': 'char', u'涨跌幅': 'char', u'总市值(亿)': 'decimal', u'换手率': 'decimal', u'上涨家数': 'int', u'下跌家数': 'int', u'领涨股票代码': 'char', u'领涨股票涨跌幅': 'decimal'}, 
-		field_conversion={u'子版块': {u'概念板块': 1, u'地域板块': 2, u'行业板块': 3}},
+		field_conversion={u'子版块': {u'概念板块': 1, u'地域板块': 2, u'行业板块': 3}, u'板块名称': bk_id_dict},
 		db_conn=conn,
 		db_tab=u'dw.dim_bankuai', 
 		db_pk=[u'id'], 
-		db_ins=[u'id', u'name', u'parent_bankuai_id']
+		db_ins=[u'id', u'name', u'parent_bankuai_id', u'is_valid']
 	)
 
+	d.determine_action()
 	
+	print d.get_csv_dict()
+	print d.get_db_dict()
 
+# S股
+# 三沙概念

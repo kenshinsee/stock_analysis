@@ -5,30 +5,29 @@ import sys,os,re,datetime,yaml,csv
 from common_tool import replace_vars, print_log, warn_log, error_log, get_date, get_yaml
 from psql import get_conn, get_cur
 
-def load_into_bankuai(db_conn, file ):
-	#-- load CSV
-	csvf = open(file)
-	csvr = csv.DictReader(csvf)
-	bk_st_pairs = []
-	bk_st_pairs_dict = {}
-	bk_id_dict = {}
-	
-	codes_to_valid = []
-	codes_to_invalid = []
-	
+def load_into_bankuai(db_conn, file, biz_date=None ):
+
 # 板块	子版块		板块名称	涨跌幅	总市值(亿)	换手率	上涨家数	下跌家数	领涨股票代码	领涨股票	领涨股票涨跌幅
 # 板块	概念板块	全息技术	3.95%	365.12		11.65	7			1			600288			大恒科技	10.03
 # 板块	概念板块	网络安全	2.95%	818.79		25.61	19			1			002308			威创股份	10.01
 
-	for row in csvr:
-		bk_name = row[u'板块名称'.encode("gbk")].decode("gbk")
-		st_id = row[u'股票代码'.encode("gbk")].decode("gbk")
-		bk_st_pairs.append([bk_name, st_id])
-	csvf.close()
-	print_log("%(num)s records have been read from %(fname)s." % {"num": len(bk_st_pairs), "fname": file})
+# biz_date date not null,
+# bankuai_id integer not null,
+# rise varchar(16),
+# market_value_in_million decimal(12,2),
+# turnover_rate decimal(5,2),
+# num_of_rise integer,
+# num_of_drop integer,
+# leading_stock_id varchar(6),
+# rise_of_leading_stock decimal(10,2),
+# primary key(biz_date, bankuai_id)
 	
-	#---- get bankuai_id from dim_bankuai
-	select_sql = "select t.id, t.name from dw.dim_bankuai t"
+	bk_id_dict = {}
+	csv_data = []
+	v_biz_date = ""
+	
+	#-- build dict for bankuai name and bankuai id from db
+	select_sql = 'select t.name, t.id from dw.dim_bankuai t'
 	cur = get_cur(db_conn)
 	cur.execute(select_sql)
 	db_rows = list(cur)
@@ -37,73 +36,92 @@ def load_into_bankuai(db_conn, file ):
 		db_id = db_row["id"]
 		bk_id_dict[db_name] = db_id
 	
-	#---- convert to dict 
-	for i in range(len(bk_st_pairs)):
-		bk_st_pairs[i][0] = bk_id_dict[bk_st_pairs[i][0]]
-		bk_st_pairs[i].append(str(bk_st_pairs[i][0]) + "-" + str(bk_st_pairs[i][1])) # as PK
-		bk_st_pairs_dict[bk_st_pairs[i][2]] = {"bk": bk_st_pairs[i][0], "st": bk_st_pairs[i][1]}
+	print_log("There are %(num)s records read from %(name)s" % {"num": len(bk_id_dict.keys()), "name": 'dw.dim_bankuai'})
+
+	#-- load CSV
+	csvf = open(file)
+	csvr = csv.DictReader(csvf)
+	for row in csvr:
+		bk_name = row[u'板块名称'.encode("gbk")].decode("gbk")
+		bk_id = bk_id_dict[bk_name]
+		row_dict = {}
+		row_dict[bk_id] = {}
+		row_dict[bk_id]["rise"] = row[u'涨跌幅'.encode("gbk")].decode("gbk")
+		row_dict[bk_id]["market_value_in_million"] = row[u'总市值(亿)'.encode("gbk")]
+		row_dict[bk_id]["turnover_rate"] = row[u'换手率'.encode("gbk")]
+		row_dict[bk_id]["num_of_rise"] = row[u'上涨家数'.encode("gbk")]
+		row_dict[bk_id]["num_of_drop"] = row[u'下跌家数'.encode("gbk")]
+		row_dict[bk_id]["leading_stock_id"] = row[u'领涨股票代码'.encode("gbk")]
+		row_dict[bk_id]["rise_of_leading_stock"] = row[u'领涨股票涨跌幅'.encode("gbk")]
 		
-	#---- get bk_id, st_id from db, seach the combination in csv dict
-	select_sql = "select t.stock_id, t.bankuai_id, t.is_valid from dw.dim_stock_bankuai t"
-	cur.execute(select_sql)
-	db_rows = list(cur)
-	for db_row in db_rows:
-		db_bk_id = db_row["bankuai_id"]
-		db_st_id = db_row["stock_id"]
-		db_pk = str(db_bk_id) + "-" + db_st_id
-		db_is_valid = db_row["is_valid"]
+		csv_data.append(row_dict)
 		
-		if db_pk in bk_st_pairs_dict and db_is_valid == "Y":
-			del bk_st_pairs_dict[db_pk]
-		elif db_pk in bk_st_pairs_dict and db_is_valid == "N":
-			codes_to_valid.append(" ( bankuai_id = " + str(db_bk_id) + " and stock_id = '" + str(db_st_id) + "' ) ")
-			del bk_st_pairs_dict[db_pk]
-		elif db_is_valid == "N":
-			# not in csv file and it's already invalid in db, do nothing
-			pass
+	csvf.close()
+	print_log("%(num)s records have been read from %(name)s." % {"num": len(csv_data), "name": file})
+
+	#-- determine biz_date
+	if not biz_date is None: 
+		if re.search(r'\d{8}', biz_date):
+			v_biz_date = biz_date
 		else:
-			# not in csv, but in db it's valid, mark it to invalid
-			codes_to_invalid.append(" ( bankuai_id = " + str(db_bk_id) + " and stock_id = '" + str(db_st_id) + "' ) ")
-			
-	#---- mark is_valid=N
-	if len(codes_to_invalid) > 0:
-		codes_to_invalid_str = " or ".join(codes_to_invalid)
-		print_log("There are %(num)s stock bankuai combination will be marked invalid. %(combination)s" % {"num": len(codes_to_invalid), "combination": codes_to_invalid_str})
-		upd_sql = "update dw.dim_stock_bankuai t set is_valid = 'N', upd_time = now() where %(combinations)s" % {"combinations": codes_to_invalid_str}
-		cur.execute(upd_sql)
-		db_conn.commit()
+			raise RuntimeError(biz_date + " is not a valid date format, the date should be like YYYYMMDD.") 
+	elif re.search(r'.*(?P<date>\d{8})\.csv', file):
+		v_biz_date = re.search(r'.*(?P<date>\d{8})\.csv', file).group("date")
 	else:
-		print_log("No stock bankuai combinations need to be marked invalid.")			
+		raise RuntimeError('Can not determine biz_date, please check if file name has date included or pass biz_date when calling the function.')
+	v_biz_date_dt = datetime.datetime.strptime(v_biz_date,'%Y%m%d')
+	
+	#-- delete biz_date from dw.bankuai
+	del_sql = 'delete from dw.bankuai where biz_date = \'%(date)s \'' % {'date': v_biz_date_dt}
+	cur.execute(del_sql)
+	db_conn.commit()
+	print_log("Deleted records from dw.bankuai where biz_date = '%(biz_date)s'." % {"biz_date": v_biz_date})
 
-	#---- mark is_valid=Y
-	if len(codes_to_valid) > 0:
-		codes_to_valid_str = " or ".join(codes_to_valid)
-		print_log("There are %(num)s stock bankuai combination will be marked valid. %(combination)s" % {"num": len(codes_to_valid), "combination": codes_to_valid_str})
-		upd_sql = "update dw.dim_stock_bankuai t set is_valid = 'Y', upd_time = now() where %(combinations)s" % {"combinations": codes_to_valid_str}
-		cur.execute(upd_sql)
-		db_conn.commit()
-	else:
-		print_log("No stock bankuai combinations need to be marked valid.")			
+	#-- insert into dw.bankuai
+	iter = 0
+	for r in csv_data:
+		k = r.keys()[0]
+		iter += 1
+		ins_sql = '''insert into dw.bankuai(
+			biz_date, 
+			bankuai_id, 
+			rise, 
+			market_value_in_million, 
+			turnover_rate, 
+			num_of_rise, 
+			num_of_drop, 
+			leading_stock_id, 
+			rise_of_leading_stock) values(
+			'%(biz_date)s',
+			%(bankuai_id)s, 
+			'%(rise)s', 
+			%(market_value_in_million)s, 
+			%(turnover_rate)s, 
+			%(num_of_rise)s, 
+			%(num_of_drop)s, 
+			'%(leading_stock_id)s', 
+			%(rise_of_leading_stock)s
+			)''' % {
+			'biz_date': v_biz_date_dt, 
+			'bankuai_id': k, 
+			'rise': r[k]['rise'], 
+			'market_value_in_million': r[k]['market_value_in_million'], 
+			'turnover_rate': r[k]['turnover_rate'], 
+			'num_of_rise': r[k]['num_of_rise'], 
+			'num_of_drop': r[k]['num_of_drop'], 
+			'leading_stock_id': r[k]['leading_stock_id'] if r[k]['leading_stock_id'] != '-' else '000000', # sometimes eastmoney doesn't return valid leading stock id, but '-', for this case, '000000' would replace it as an unknown stock id
+			'rise_of_leading_stock': r[k]['rise_of_leading_stock']
+			}
 
-	#---- insert stocks into dim_stock_bankuai
-	if len(bk_st_pairs_dict.keys()) > 0:
-		values = []
-		print_log("There are %(num)s stock bankuai combination will be inserted." % {"num": len(bk_st_pairs_dict.keys())})
-		for pk in bk_st_pairs_dict:
-			print_log(pk)
-			values.append("('%(stock_id)s', '%(bankuai_id)s', now(), 'Y')" % {"stock_id": bk_st_pairs_dict[pk]["st"], "bankuai_id": bk_st_pairs_dict[pk]["bk"]} )
-		values_str = ",".join(values)
-		ins_sql = "insert into dw.dim_stock_bankuai(stock_id, bankuai_id, upd_time, is_valid) values %(values)s" % {"values": values_str}
 		cur.execute(ins_sql)
-		db_conn.commit()
-	else:
-		print_log("No new stock bankuai combination.")
+		
+	db_conn.commit()
+	print_log( str(iter) + " inserted into dw.bankuai.")
 
-	print_log("dw.dim_stock_bankuai has been refreshed successfully.")
 
 if __name__ == "__main__":
 	db_dict = get_yaml('D:\\workspace\\Stock\\bin\\..\\etc\\db.yml')
 	conn = get_conn(db_dict["DB"], db_dict["Username"], db_dict["Password"], db_dict["Host"], db_dict["Port"])
 	
-	load_into_stock_bankuai(conn, 'D:\\workspace\\Stock\\bin\\..\\log\\bankuai_stock_20160104.csv')
+	load_into_bankuai(conn, 'D:\\workspace\\Stock\\bin\\..\\data\\bankuai_20160104.csv')
 	conn.close()

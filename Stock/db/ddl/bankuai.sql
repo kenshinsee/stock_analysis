@@ -2,7 +2,7 @@
 create table dw.bankuai(
   biz_date date not null,
   bankuai_id integer not null,
-  rise decimal(10,2),
+  rise varchar(16),
   market_value_in_million decimal(12,2),
   turnover_rate decimal(5,2),
   num_of_rise integer,

@@ -6,3 +6,5 @@ create table dw.dim_stock(
   upd_time timestamp,
   is_valid varchar(1)
 );
+Insert into dw.dim_stock values('000000', 'Unknown', now(), 'N');
+commit;

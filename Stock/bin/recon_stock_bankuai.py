@@ -10,7 +10,8 @@ from psql import get_conn, get_cur
 
 #-- sys var
 SEP = os.path.sep
-FILE_PATH = os.getcwd()
+#FILE_PATH = os.getcwd()
+FILE_PATH = sys.path[0]
 FILE_BASE_NAME = __file__
 FILE_NAME = FILE_PATH + SEP + FILE_BASE_NAME
 PROJ_BASE_DIR = FILE_PATH + SEP + ".."
@@ -50,7 +51,7 @@ AND SB.IS_VALID = 'Y'
 AND B.IS_VALID = 'Y'
 		''',
 		"recon_fields_in_db": ["pb_name", "bk_name", "stock_id"]
-	}
+	},
 }
 
 
