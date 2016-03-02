@@ -1,16 +1,16 @@
 #coding:utf-8
 #------------------------------------
-#-- sina stock api - real time
+#-- tengxun stock api - real time
 #------------------------------------
 #sh: http://qt.gtimg.cn/q=sh600110
 #sz: http://qt.gtimg.cn/q=sz000858
 #
 
 import urllib2,re,sys
-from object.Sina_stock_object import Sina_stock_object
+from object.Tengxun_stock_object import Tengxun_stock_object
 
-class Sina_stock:
-	__url_prefix = "http://hq.sinajs.cn/list="
+class Tengxun_stock:
+	__url_prefix = "http://qt.gtimg.cn/q="
 	__code_symbol = "%(code_loc)s%(code)s"
 	__code_loc_dict = {
 		"60": "sh", 
@@ -41,20 +41,19 @@ class Sina_stock:
 		for code in self.get_stock_content():
 			out_object[code] = {}
 			try: 
-				obj = Sina_stock_object(code, re.findall('\"(.+)\"', self.get_stock_content()[code])[0].split(","))
+				obj = Tengxun_stock_object(code, re.findall('\"(.+)\"', self.get_stock_content()[code])[0].split("~"))
 			except:
 				raise RuntimeError("Unknow stock. [" + code + "]") 
-			out_object[code][obj.date] = obj
+			out_object[code] = obj
 		return out_object
 
 if __name__ == "__main__":
-	#s = sina_stock("002708,002547")
-	s = Sina_stock("601080,300081")
-	print s.get_stock_content()
-	print s.get_stock_content()['300081']
-
+	s = Tengxun_stock("300244,300081")
+	#print s.get_stock_content()
 	
-	#objs = s.get_stock_object()
-	#for code in objs:
-	#	for date in objs[code]:
-	#		print code, date, objs[code][date].open_price, objs[code][date].current_price, objs[code][date].date, objs[code][date].time
+	objs = s.get_stock_object()
+	for code in objs:
+		print code, objs[code].datetime, objs[code].name
+			
+			
+			
