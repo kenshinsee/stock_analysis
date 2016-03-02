@@ -1,5 +1,5 @@
 #
-# Date,Open,High,Low,Close,Volume,Adj Close
+# Date,Open,High,Low,Close,Volume,Adj Close(复权收盘价)
 # 2015-11-13,12.08,13.28,12.03,13.28,31383100,13.28
 #
 

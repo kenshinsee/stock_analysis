@@ -117,6 +117,7 @@ def load_into_bankuai(db_conn, file, biz_date=None ):
 		
 	db_conn.commit()
 	print_log( str(iter) + " inserted into dw.bankuai.")
+	print_log("dw.bankuai has been refreshed successfully.")
 
 
 if __name__ == "__main__":
