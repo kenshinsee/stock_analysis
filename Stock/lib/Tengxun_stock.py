@@ -48,12 +48,12 @@ class Tengxun_stock:
 		return out_object
 
 if __name__ == "__main__":
-	s = Tengxun_stock("300244,300081")
+	s = Tengxun_stock("600110")
 	#print s.get_stock_content()
 	
 	objs = s.get_stock_object()
 	for code in objs:
-		print code, objs[code].datetime, objs[code].name
+		print code, objs[code].datetime, objs[code].high_price, objs[code].low_price, objs[code].high_limit, objs[code].low_limit
 			
 			
 			
