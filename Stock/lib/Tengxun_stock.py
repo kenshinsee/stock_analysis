@@ -44,7 +44,7 @@ class Tengxun_stock:
 				obj = Tengxun_stock_object(code, re.findall('\"(.+)\"', self.get_stock_content()[code])[0].split("~"))
 			except:
 				raise RuntimeError("Unknow stock. [" + code + "]") 
-			out_object[code] = obj
+			out_object[code][obj.datetime[0:8]] = obj
 		return out_object
 
 if __name__ == "__main__":
@@ -53,7 +53,8 @@ if __name__ == "__main__":
 	
 	objs = s.get_stock_object()
 	for code in objs:
-		print code, objs[code].datetime, objs[code].high_price, objs[code].low_price, objs[code].high_limit, objs[code].low_limit
+		for date in objs[code]:
+			print code, date, objs[code][date].datetime, objs[code][date].high_price, objs[code][date].low_price, objs[code][date].high_limit, objs[code][date].low_limit
 			
 			
 			
