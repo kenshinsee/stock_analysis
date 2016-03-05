@@ -6,18 +6,17 @@ import sys,os,re,datetime,csv
 from optparse import OptionParser
 from common_tool import replace_vars, print_log, warn_log, error_log, get_date, get_yaml
 from psql import get_conn, get_cur
+from Sys_paths import Sys_paths
 
 
 #-- sys var
 SEP = os.path.sep
-#FILE_PATH = os.getcwd()
 FILE_PATH = sys.path[0]
 FILE_BASE_NAME = __file__
 FILE_NAME = FILE_PATH + SEP + FILE_BASE_NAME
-PROJ_BASE_DIR = FILE_PATH + SEP + ".."
-YML_DIR = PROJ_BASE_DIR + SEP + "etc"
-DATA_DIR = PROJ_BASE_DIR + SEP + "data"
-LOG_DIR = PROJ_BASE_DIR + SEP + "log"
+YML_DIR = Sys_paths.YML_DIR
+DATA_DIR = Sys_paths.DATA_DIR
+LOG_DIR = Sys_paths.LOG_DIR
 DB_YML = YML_DIR + SEP + "db.yml"
 
 file_to_recon = ""

@@ -40,21 +40,21 @@ class Sina_stock:
 		out_object = {}
 		for code in self.get_stock_content():
 			out_object[code] = {}
-			try: 
-				obj = Sina_stock_object(code, re.findall('\"(.+)\"', self.get_stock_content()[code])[0].split(","))
-			except:
-				raise RuntimeError("Unknow stock. [" + code + "]") 
+			#try: 
+			obj = Sina_stock_object(code, re.findall('\"(.+)\"', self.get_stock_content()[code])[0].split(","))
+			#except:
+			#	raise RuntimeError("Unknow stock. [" + code + "]") 
 			out_object[code][obj.date] = obj
 		return out_object
 
 if __name__ == "__main__":
 	#s = sina_stock("002708,002547")
-	s = Sina_stock("601080,300081")
-	print s.get_stock_content()
-	print s.get_stock_content()['300081']
+	#s = Sina_stock("600101")
+	s = Sina_stock(600101,'20160305','20160305')
+	print s.get_stock_content()['600101']
 
 	
-	#objs = s.get_stock_object()
-	#for code in objs:
-	#	for date in objs[code]:
-	#		print code, date, objs[code][date].open_price, objs[code][date].current_price, objs[code][date].date, objs[code][date].time
+	objs = s.get_stock_object()
+	for code in objs:
+		for date in objs[code]:
+			print code, date, objs[code][date].open_price, objs[code][date].current_price, objs[code][date].date, objs[code][date].time

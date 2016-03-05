@@ -6,8 +6,8 @@
 #  4: 昨收  
 #  5: 今开  
 #  6: 成交量（手）  
-#  7: 外盘  
-#  8: 内盘  
+#  7: 外盘（手）
+#  8: 内盘（手）
 #  9: 买一  
 # 10: 买一量（手）  
 # 11-18: 买二 买五  
@@ -29,8 +29,8 @@
 # 41: 最高  
 # 42: 最低  
 # 43: 振幅%
-# 44: 流通市值  
-# 45: 总市值  
+# 44: 流通市值 (亿)
+# 45: 总市值 (亿)
 # 46: 市净率  
 # 47: 涨停价  
 # 48: 跌停价  
@@ -47,37 +47,38 @@ class Tengxun_stock_object:
 			self.__current_price = attr[3]
 			self.__yesterday_close_price = attr[4]
 			self.__open_price = attr[5]
-			self.__volume_hands = attr[6]
-			self.__outer_disc = attr[7]
-			self.__inner_disc = attr[8]
+			self.__volume = attr[6] # round-lot
+			self.__outer_disc = attr[7] # round-lot
+			self.__inner_disc = attr[8] # round-lot
 			self.__buy_1_price = attr[9]
-			self.__buy_1_handes = attr[10]
+			self.__buy_1_roundlot = attr[10]
 			self.__buy_2_price = attr[11]
-			self.__buy_2_handes = attr[12]
+			self.__buy_2_roundlot = attr[12]
 			self.__buy_3_price = attr[13]
-			self.__buy_3_handes = attr[14]
+			self.__buy_3_roundlot = attr[14]
 			self.__buy_4_price = attr[15]
-			self.__buy_4_handes = attr[16]
+			self.__buy_4_roundlot = attr[16]
 			self.__buy_5_price = attr[17]
-			self.__buy_5_handes = attr[18]
+			self.__buy_5_roundlot = attr[18]
 			self.__sell_1_price = attr[19]
-			self.__sell_1_handes = attr[20]
+			self.__sell_1_roundlot = attr[20]
 			self.__sell_2_price = attr[21]
-			self.__sell_2_handes = attr[22]
+			self.__sell_2_roundlot = attr[22]
 			self.__sell_3_price = attr[23]
-			self.__sell_3_handes = attr[24]
+			self.__sell_3_roundlot = attr[24]
 			self.__sell_4_price = attr[25]
-			self.__sell_4_handes = attr[26]
+			self.__sell_4_roundlot = attr[26]
 			self.__sell_5_price = attr[27]
-			self.__sell_5_handes = attr[28]
+			self.__sell_5_roundlot = attr[28]
 			self.__trade_by_trade_deal = attr[29]
-			self.__datetime = attr[30]
+			self.__date = attr[30][0:4] + '-' + attr[30][4:6] + '-' + attr[30][6:8]
+			self.__time = attr[30][8:10] + ':' + attr[30][10:12] + ':' + attr[30][12:14]
 			self.__rise_price = attr[31]
 			self.__rise = attr[32]
-			self.__high_price = attr[33]
-			self.__low_price = attr[34]
+			self.__top_price = attr[33]
+			self.__floor_price = attr[34]
 			self.__unknown_1 = attr[35]
-			self.__volume_money_in_ten_thousand = attr[37]
+			self.__amount = attr[37] # 10 thousands
 			self.__turnover_ratio = attr[38]
 			self.__PE_ratio = attr[39]
 			self.__amplitudes = attr[43]
@@ -124,12 +125,12 @@ class Tengxun_stock_object:
 		self.__open_price = open_price
 
 	@property
-	def volume_hands(self):
-		return self.__volume_hands
+	def volume(self):
+		return self.__volume
 	
-	@volume_hands.setter
-	def volume_hands(self, volume_hands):
-		self.__volume_hands = volume_hands
+	@volume.setter
+	def volume(self, volume):
+		self.__volume = volume
 
 	@property
 	def outer_disc(self):
@@ -156,12 +157,12 @@ class Tengxun_stock_object:
 		self.__buy_1_price = buy_1_price
 		
 	@property
-	def buy_1_handes(self):
-		return self.__buy_1_handes
+	def buy_1_roundlot(self):
+		return self.__buy_1_roundlot
 	
-	@buy_1_handes.setter
-	def buy_1_handes(self, buy_1_handes):
-		self.__buy_1_handes = buy_1_handes
+	@buy_1_roundlot.setter
+	def buy_1_roundlot(self, buy_1_roundlot):
+		self.__buy_1_roundlot = buy_1_roundlot
 		
 	@property
 	def buy_2_price(self):
@@ -172,12 +173,12 @@ class Tengxun_stock_object:
 		self.__buy_2_price = buy_2_price
 		
 	@property
-	def buy_2_handes(self):
-		return self.__buy_2_handes
+	def buy_2_roundlot(self):
+		return self.__buy_2_roundlot
 	
-	@buy_2_handes.setter
-	def buy_2_handes(self, buy_2_handes):
-		self.__buy_2_handes = buy_2_handes
+	@buy_2_roundlot.setter
+	def buy_2_roundlot(self, buy_2_roundlot):
+		self.__buy_2_roundlot = buy_2_roundlot
 		
 	@property
 	def buy_3_price(self):
@@ -188,12 +189,12 @@ class Tengxun_stock_object:
 		self.__buy_3_price = buy_3_price
 		
 	@property
-	def buy_3_handes(self):
-		return self.__buy_3_handes
+	def buy_3_roundlot(self):
+		return self.__buy_3_roundlot
 	
-	@buy_3_handes.setter
-	def buy_3_handes(self, buy_3_handes):
-		self.__buy_3_handes = buy_3_handes
+	@buy_3_roundlot.setter
+	def buy_3_roundlot(self, buy_3_roundlot):
+		self.__buy_3_roundlot = buy_3_roundlot
 
 	@property
 	def buy_4_price(self):
@@ -204,12 +205,12 @@ class Tengxun_stock_object:
 		self.__buy_4_price = buy_4_price
 		
 	@property
-	def buy_4_handes(self):
-		return self.__buy_4_handes
+	def buy_4_roundlot(self):
+		return self.__buy_4_roundlot
 	
-	@buy_4_handes.setter
-	def buy_4_handes(self, buy_4_handes):
-		self.__buy_4_handes = buy_4_handes
+	@buy_4_roundlot.setter
+	def buy_4_roundlot(self, buy_4_roundlot):
+		self.__buy_4_roundlot = buy_4_roundlot
 		
 	@property
 	def buy_5_price(self):
@@ -220,12 +221,12 @@ class Tengxun_stock_object:
 		self.__buy_5_price = buy_5_price
 		
 	@property
-	def buy_5_handes(self):
-		return self.__buy_5_handes
+	def buy_5_roundlot(self):
+		return self.__buy_5_roundlot
 	
-	@buy_5_handes.setter
-	def buy_5_handes(self, buy_5_handes):
-		self.__buy_5_handes = buy_5_handes
+	@buy_5_roundlot.setter
+	def buy_5_roundlot(self, buy_5_roundlot):
+		self.__buy_5_roundlot = buy_5_roundlot
 		
 	@property
 	def sell_1_price(self):
@@ -236,12 +237,12 @@ class Tengxun_stock_object:
 		self.__sell_1_price = sell_1_price
 		
 	@property
-	def sell_1_handes(self):
-		return self.__sell_1_handes
+	def sell_1_roundlot(self):
+		return self.__sell_1_roundlot
 	
-	@sell_1_handes.setter
-	def sell_1_handes(self, sell_1_handes):
-		self.__sell_1_handes = sell_1_handes
+	@sell_1_roundlot.setter
+	def sell_1_roundlot(self, sell_1_roundlot):
+		self.__sell_1_roundlot = sell_1_roundlot
 		
 	@property
 	def sell_2_price(self):
@@ -252,12 +253,12 @@ class Tengxun_stock_object:
 		self.__sell_2_price = sell_2_price
 		
 	@property
-	def sell_2_handes(self):
-		return self.__sell_2_handes
+	def sell_2_roundlot(self):
+		return self.__sell_2_roundlot
 	
-	@sell_2_handes.setter
-	def sell_2_handes(self, sell_2_handes):
-		self.__sell_2_handes = sell_2_handes
+	@sell_2_roundlot.setter
+	def sell_2_roundlot(self, sell_2_roundlot):
+		self.__sell_2_roundlot = sell_2_roundlot
 		
 	@property
 	def sell_3_price(self):
@@ -268,12 +269,12 @@ class Tengxun_stock_object:
 		self.__sell_3_price = sell_3_price
 		
 	@property
-	def sell_3_handes(self):
-		return self.__sell_3_handes
+	def sell_3_roundlot(self):
+		return self.__sell_3_roundlot
 	
-	@sell_3_handes.setter
-	def sell_3_handes(self, sell_3_handes):
-		self.__sell_3_handes = sell_3_handes
+	@sell_3_roundlot.setter
+	def sell_3_roundlot(self, sell_3_roundlot):
+		self.__sell_3_roundlot = sell_3_roundlot
 
 	@property
 	def sell_4_price(self):
@@ -284,12 +285,12 @@ class Tengxun_stock_object:
 		self.__sell_4_price = sell_4_price
 		
 	@property
-	def sell_4_handes(self):
-		return self.__sell_4_handes
+	def sell_4_roundlot(self):
+		return self.__sell_4_roundlot
 	
-	@sell_4_handes.setter
-	def sell_4_handes(self, sell_4_handes):
-		self.__sell_4_handes = sell_4_handes
+	@sell_4_roundlot.setter
+	def sell_4_roundlot(self, sell_4_roundlot):
+		self.__sell_4_roundlot = sell_4_roundlot
 		
 	@property
 	def sell_5_price(self):
@@ -300,21 +301,29 @@ class Tengxun_stock_object:
 		self.__sell_5_price = sell_5_price
 		
 	@property
-	def sell_5_handes(self):
-		return self.__sell_5_handes
+	def sell_5_roundlot(self):
+		return self.__sell_5_roundlot
 	
-	@sell_5_handes.setter
-	def sell_5_handes(self, sell_5_handes):
-		self.__sell_5_handes = sell_5_handes
+	@sell_5_roundlot.setter
+	def sell_5_roundlot(self, sell_5_roundlot):
+		self.__sell_5_roundlot = sell_5_roundlot
 		
 	@property
-	def datetime(self):
-		return self.__datetime
+	def date(self):
+		return self.__date
 
-	@datetime.setter
-	def datetime(self, datetime):
-		self.__datetime = datetime
-	
+	@date.setter
+	def date(self, date):
+		self.__date = date
+
+	@property
+	def time(self):
+		return self.__time
+
+	@time.setter
+	def time(self, time):
+		self.__time = time
+
 	@property
 	def rise_price(self):
 		return self.__rise_price
@@ -332,28 +341,28 @@ class Tengxun_stock_object:
 		self.__rise = rise
 		
 	@property
-	def high_price(self):
-		return self.__high_price
+	def top_price(self):
+		return self.__top_price
 	
-	@high_price.setter
-	def high_price(self, high_price):
-		self.__high_price = high_price
+	@top_price.setter
+	def top_price(self, top_price):
+		self.__top_price = top_price
 		
 	@property
-	def low_price(self):
-		return self.__low_price
+	def floor_price(self):
+		return self.__floor_price
 	
-	@low_price.setter
-	def low_price(self, low_price):
-		self.__low_price = low_price
+	@floor_price.setter
+	def floor_price(self, floor_price):
+		self.__floor_price = floor_price
 
 	@property
-	def volume_money_in_ten_thousand(self):
-		return self.__volume_money_in_ten_thousand
+	def amount(self):
+		return self.__amount
 	
-	@volume_money_in_ten_thousand.setter
-	def volume_money_in_ten_thousand(self, volume_money_in_ten_thousand):
-		self.__volume_money_in_ten_thousand = volume_money_in_ten_thousand
+	@amount.setter
+	def amount(self, amount):
+		self.__amount = amount
 
 	@property
 	def turnover_ratio(self):

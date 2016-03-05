@@ -72,9 +72,10 @@ class Yahoo_stock:
 
 		
 if __name__ == "__main__":
-	s = Yahoo_stock("002547", "20151110", "20151121")
-	objs = s.get_stock_object()
-	for code in objs:
-		for date in objs[code]:
-			print code, date, objs[code][date].open_price
+	s = Yahoo_stock("002547", "20160301", "20160305")
+	print s.get_stock_content()
+	#objs = s.get_stock_object()
+	#for code in objs:
+	#	for date in objs[code]:
+	#		print code, date, objs[code][date].open_price
 		

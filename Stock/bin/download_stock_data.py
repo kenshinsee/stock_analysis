@@ -6,7 +6,6 @@ import sys,os,re,datetime
 from optparse import OptionParser
 from common_tool import replace_vars, print_log, error_log, get_date
 from Sina_stock import Sina_stock
-from Yahoo_stock import Yahoo_stock
 from Tengxun_stock import Tengxun_stock
 
 #-- sys var
@@ -21,34 +20,31 @@ end_date = ""
 
 #-- opts
 parser = OptionParser()
-parser.add_option("--stock_code", "-c", dest="stock_code", action="store", type="string", help="Stock code, e.g. 601006")
-parser.add_option("--start_date", "-s", dest="start_date", action="store", type="string", default=yesterday, help="Start date of the date range, e.g. 20150101, ignored if --all_hist|-a assigned")
-parser.add_option("--end_date", "-e", dest="end_date", action="store", type="string", default=yesterday, help="End date of the date range, e.g. 20150101, ignored if --all_hist|-a assigned")
-parser.add_option("--all_hist", "-a", dest="all_hist", action="store_true", default=False, help="All the historical data, ignoring start_date/end_date argments")
-parser.add_option("--real_time", "-r", dest="real_time", action="store_true", default=False, help="Realtime data, ignoring start_date/end_date/all_hist argments")
+parser.add_option("--start_date", "-s", dest="start_date", action="store", type="string", help="Start date of the date range, e.g. 20150101, applicable in hist mode only")
+parser.add_option("--end_date", "-e", dest="end_date", action="store", type="string", help="End date of the date range, e.g. 20150101, applicable in hist mode only")
+parser.add_option("--mode", "-m", dest="mode", action="store", default='eod', help="eod|hist")
 parser.add_option("--object_class", "-o", dest="object_class", action="store", help="Stock object class overwrites the hardcoded objects, Sina_stock|Tengxun_stock|Yahoo_stock")
 (options, args) = parser.parse_args()
 
 #-- var assignment
-vars_for_none_check = ["stock_code"]
-if options.real_time:
-	mode = "real_time"
+if options.mode == 'hist':
+	if options.start_date is None:
+		start_date = "19000101"
+	else:
+		start_date = options.start_date
+		
+	if options.end_date is None:
+		end_date = "99991231"
+	else:
+		end_date = options.end_date
+elif options.mode == 'eod':
 	start_date = today
 	end_date = today
-elif options.all_hist:
-	mode = "all_hist"
-	start_date = "19000101"
-	end_date = "99991231"
-else:
-	mode = "normal"
-	start_date = options.start_date
-	end_date = options.end_date
 	
 stock_object = {
 	#"real_time": {"object_class": "Sina_stock"},
-	"real_time": {"object_class": "Tengxun_stock"},
-	"all_hist": {"object_class": "Yahoo_stock"},
-	"normal": {"object_class": "Yahoo_stock"},
+	"eod": {"object_class": "Tengxun_stock"},
+	"hist": {"object_class": "Yahoo_stock"},
 }
 	
 #-- function

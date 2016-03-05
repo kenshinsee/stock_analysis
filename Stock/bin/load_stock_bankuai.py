@@ -4,8 +4,9 @@
 import sys,os,re,datetime,csv
 
 from optparse import OptionParser
-from common_tool import replace_vars, print_log, warn_log, error_log, get_date, get_yaml
+from common_tool import replace_vars, print_log, warn_log, error_log, get_date, get_yaml, recent_working_day
 from psql import get_conn, get_cur
+from Sys_paths import Sys_paths
 from loader.load_into_dim_bankuai import load_into_dim_bankuai
 from loader.load_into_dim_stock import load_into_dim_stock
 from loader.load_into_dim_stock_bankuai import load_into_dim_stock_bankuai
@@ -13,14 +14,12 @@ from loader.load_into_bankuai import load_into_bankuai
 
 #-- sys var
 SEP = os.path.sep
-#FILE_PATH = os.getcwd()
 FILE_PATH = sys.path[0]
 FILE_BASE_NAME = __file__
 FILE_NAME = FILE_PATH + SEP + FILE_BASE_NAME
-PROJ_BASE_DIR = FILE_PATH + SEP + ".."
-YML_DIR = PROJ_BASE_DIR + SEP + "etc"
-DATA_DIR = PROJ_BASE_DIR + SEP + "data"
-LOG_DIR = PROJ_BASE_DIR + SEP + "log"
+YML_DIR = Sys_paths.YML_DIR
+DATA_DIR = Sys_paths.DATA_DIR
+LOG_DIR = Sys_paths.LOG_DIR
 DB_YML = YML_DIR + SEP + "db.yml"
 
 table_mapping = {
@@ -51,8 +50,15 @@ for i in table_mapping:
 	load_seq_mapping[table_mapping[i]["load_seq"]] = i
 load_seq_tables = [load_seq_mapping[i] for i in load_seq_mapping]
 
+#-- fetch DB info
+db_dict = get_yaml(DB_YML)
+
+#-- open db connection
+conn = get_conn(db_dict["DB"], db_dict["Username"], db_dict["Password"], db_dict["Host"], db_dict["Port"])
+
 today = get_date("today")
 yesterday = get_date("yesterday")
+recent_working_day = recent_working_day(today, is_skip_holiday=True, conn=conn)
 start_date = ""
 end_date = ""
 files_to_load = {}
@@ -60,8 +66,8 @@ files_to_load = {}
 
 #-- opts
 parser = OptionParser()
-parser.add_option("--start_date", "-s", dest="start_date", action="store", type="string", default=today, help="Start date of the date range, e.g. 20150101")
-parser.add_option("--end_date", "-e", dest="end_date", action="store", type="string", default=today, help="End date of the date range, e.g. 20150101")
+parser.add_option("--start_date", "-s", dest="start_date", action="store", type="string", default=recent_working_day, help="Start date of the date range, e.g. 20150101")
+parser.add_option("--end_date", "-e", dest="end_date", action="store", type="string", default=recent_working_day, help="End date of the date range, e.g. 20150101")
 parser.add_option("--table", "-t", dest="table", action="store", type="string", help="dim_bankuai|dim_stock|dim_stock_bankuai|bankuai")
 parser.add_option("--in_file", "-f", dest="in_file", action="store", type="string", help="To load a specific file, $DATE would be replaced from --start_date and --end_date")
 (options, args) = parser.parse_args()
@@ -137,12 +143,6 @@ for k,v in files_to_load.items():
 		process_dt_dt = process_dt_dt + datetime.timedelta(1)
 	files_to_load[k] = dt_replaced
 
-
-#-- fetch DB info
-db_dict = get_yaml(DB_YML)
-
-#-- open db connection
-conn = get_conn(db_dict["DB"], db_dict["Username"], db_dict["Password"], db_dict["Host"], db_dict["Port"])
 
 #-- get the dict of parent bankuai id and name
 #parent_bankuai_ids = return_parent_bankuai_ids(conn)

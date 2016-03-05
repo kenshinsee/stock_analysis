@@ -31,34 +31,36 @@ class Sina_stock_object:
 	__open_price = ""
 	__yesterday_close_price = ""
 	__current_price = ""
-	__high_price = ""
-	__low_price = ""
+	__top_price = ""
+	__floor_price = ""
 	__bidding = ""
 	__auction = ""
 	__volume = ""
 	__amount = ""
-	__buy_1_handes = ""
+	__buy_1_roundlot = ""
 	__buy_1_price = ""
-	__buy_2_handes = ""
+	__buy_2_roundlot = ""
 	__buy_2_price = ""
-	__buy_3_handes = ""
+	__buy_3_roundlot = ""
 	__buy_3_price = ""
-	__buy_4_handes = ""
+	__buy_4_roundlot = ""
 	__buy_4_price = ""
-	__buy_5_handes = ""
+	__buy_5_roundlot = ""
 	__buy_5_price = ""
-	__sell_1_handes = ""
+	__sell_1_roundlot = ""
 	__sell_1_price = ""
-	__sell_2_handes = ""
+	__sell_2_roundlot = ""
 	__sell_2_price = ""
-	__sell_3_handes = ""
+	__sell_3_roundlot = ""
 	__sell_3_price = ""
-	__sell_4_handes = ""
+	__sell_4_roundlot = ""
 	__sell_4_price = ""
-	__sell_5_handes = ""
+	__sell_5_roundlot = ""
 	__sell_5_price = ""
 	__date = ""
 	__time = ""
+
+# var hq_str_sz300374="∫„Õ®ø∆ºº,18.760,18.800,19.200,20.650,17.500,19.200,19.220,2724272,51598032.370,34200,19.200,2100,19.190,200,19.180,5300,19.150,1300,19.100,600,19.220,18700,19.230,2200,19.250,1200,19.290,3100,19.300,2016-03-04,15:05:56,00";
 
 	def __init__(self, code, attr=[]):
 		self.__code = code
@@ -66,31 +68,31 @@ class Sina_stock_object:
 			self.__open_price = attr[1]
 			self.__yesterday_close_price = attr[2]
 			self.__current_price = attr[3]
-			self.__high_price = attr[4]
-			self.__low_price = attr[5]
+			self.__top_price = attr[4]
+			self.__floor_price = attr[5]
 			self.__bidding = attr[6]
 			self.__auction = attr[7]
-			self.__volume = attr[8]
-			self.__amount = attr[9]
-			self.__buy_1_handes = attr[10]
+			self.__volume = round(float(attr[8]) / 100, 2) # share to round-lot
+			self.__amount = round(float(attr[9]) / 10000, 2) # 10 thousands
+			self.__buy_1_roundlot = attr[10]
 			self.__buy_1_price = attr[11]
-			self.__buy_2_handes = attr[12]
+			self.__buy_2_roundlot = attr[12]
 			self.__buy_2_price = attr[13]
-			self.__buy_3_handes = attr[14]
+			self.__buy_3_roundlot = attr[14]
 			self.__buy_3_price = attr[15]
-			self.__buy_4_handes = attr[16]
+			self.__buy_4_roundlot = attr[16]
 			self.__buy_4_price = attr[17]
-			self.__buy_5_handes = attr[18]
+			self.__buy_5_roundlot = attr[18]
 			self.__buy_5_price = attr[19]
-			self.__sell_1_handes = attr[20]
+			self.__sell_1_roundlot = attr[20]
 			self.__sell_1_price = attr[21]
-			self.__sell_2_handes = attr[22]
+			self.__sell_2_roundlot = attr[22]
 			self.__sell_2_price = attr[23]
-			self.__sell_3_handes = attr[24]
+			self.__sell_3_roundlot = attr[24]
 			self.__sell_3_price = attr[25]
-			self.__sell_4_handes = attr[26]
+			self.__sell_4_roundlot = attr[26]
 			self.__sell_4_price = attr[27]
-			self.__sell_5_handes = attr[28]
+			self.__sell_5_roundlot = attr[28]
 			self.__sell_5_price = attr[29]
 			self.__date = attr[30]
 			self.__time = attr[31]
@@ -124,20 +126,20 @@ class Sina_stock_object:
 		self.__current_price = current_price
 
 	@property
-	def high_price(self):
-		return self.__high_price
+	def top_price(self):
+		return self.__top_price
 	
-	@high_price.setter
-	def high_price(self, high_price):
-		self.__high_price = high_price
+	@top_price.setter
+	def top_price(self, top_price):
+		self.__top_price = top_price
 
 	@property
-	def low_price(self):
-		return self.__low_price
+	def floor_price(self):
+		return self.__floor_price
 	
-	@low_price.setter
-	def low_price(self, low_price):
-		self.__low_price = low_price
+	@floor_price.setter
+	def floor_price(self, floor_price):
+		self.__floor_price = floor_price
 	
 	@property
 	def bidding(self):

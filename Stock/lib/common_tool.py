@@ -1,4 +1,5 @@
 import sys,os,re,datetime,cookielib,urllib,urllib2,yaml
+from psql import get_conn, get_cur
 
 def replace_vars(str, map):
     out_str = str
@@ -6,7 +7,7 @@ def replace_vars(str, map):
         out_str = out_str.replace(m, map[m])
     return out_str
 
-def get_date(dt_desc, is_iso=False, is_date=False):
+def get_date(dt_desc, to_iso=False, to_date=False):
     # dt_desc could be 
     # # today|yesterday|theDayBeforeYesterday|tomorrow|theDayAfterTomorrow
     # # T is today
@@ -28,12 +29,12 @@ def get_date(dt_desc, is_iso=False, is_date=False):
     else:
         raise RuntimeError("Unknow date description. [" + dt_desc + "]") 
     
-    if not is_date:
-        out_dt = out_dt.strftime("%Y%m%d") if not is_iso else out_dt.strftime("%Y-%m-%d")
+    if not to_date:
+        out_dt = out_dt.strftime("%Y%m%d") if not to_iso else out_dt.strftime("%Y-%m-%d")
 
     return out_dt
     
-#-- define color print class (it doesn't work on windows)
+#-- define color print class
 class bcolors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -90,6 +91,34 @@ def get_yaml(yml_file):
 	y = yaml.load(f)
 	f.close()
 	return y
+
+def recent_working_day(in_date='today', is_skip_holiday=False, conn=None): # date=yyyymmdd
+	# if is_skip_holiday=False, return the most recent non-weekend day
+	# if is_skip_holiday=True, return the most recent non-weekend day AND holiday will be skipped as well
+	holidays = []
+	if re.match("^\d{8}$", in_date):
+		date_date = datetime.datetime.strptime(in_date, '%Y%m%d')
+	else:
+		date_date = get_date(in_date, to_date=True)
+		
+	if is_skip_holiday:
+		if conn is None: 
+			raise RuntimeError('connection is missing when is_skip_holiday is enable.')
+		else:
+			cur = get_cur(conn)
+			cur.execute('select date from dw.holiday') # yyyymmdd
+			rows = list(cur)
+			for row in rows:
+				holidays.append(row['date'])
+			cur.close()
+
+	while date_date.isoweekday() >= 6 or date_date.strftime('%Y%m%d') in holidays:
+		date_date = date_date + datetime.timedelta(-1)
+	
+	return date_date.strftime('%Y%m%d')
 	
 if __name__ == "__main__":
-    print get_date("theDayAfterTomorrow", is_iso=True, is_date=True)
+	conn = get_conn("StockDb", "hong", "hong", "192.168.122.131", "5432")
+	print recent_working_day(is_skip_holiday=True, conn=conn)
+	
+	
