@@ -279,10 +279,10 @@ if __name__ == "__main__":
     today = get_date('today')
     
     bkbkfile_name = 'bankuai_' + today + '.csv'
-    return_list = e.export_bankuai_status('D:\\workspace\\Stock\\data\\' + bkbkfile_name)
+    return_list = e.export_bankuai_status('D:\\workspace\\Stock\\data\\stock_bankuai_daily\\' + bkbkfile_name)
     #return_list = e.export_bankuai_status('/app/dw/script/python/' + bkbkfile_name)
 	
     bkstfile_name = 'bankuai_stock_' + today + '.csv'
-    return_dict = e.export_bankuai_stock('D:\\workspace\\Stock\\data\\' + bkstfile_name)
+    return_dict = e.export_bankuai_stock('D:\\workspace\\Stock\\data\\stock_bankuai_daily\\' + bkstfile_name)
     #return_dict = e.export_bankuai_stock('/app/dw/script/python/' + bkstfile_name)
     

@@ -18,7 +18,7 @@ FILE_PATH = sys.path[0]
 FILE_BASE_NAME = __file__
 FILE_NAME = FILE_PATH + SEP + FILE_BASE_NAME
 YML_DIR = Sys_paths.YML_DIR
-DATA_DIR = Sys_paths.DATA_DIR
+DATA_DIR = Sys_paths.DATA_STOCK_BANKUAI_DAILY
 LOG_DIR = Sys_paths.LOG_DIR
 DB_YML = YML_DIR + SEP + "db.yml"
 

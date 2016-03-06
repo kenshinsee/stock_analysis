@@ -12,7 +12,7 @@ from Tengxun_stock import Tengxun_stock
 #-- sys var
 FILE_PATH = os.getcwd()
 FILE_BASE_NAME = __file__
-FILE_NAME = FILE_PATH + "/" + FILE_BASE_NAME
+FILE_NAME = FILE_PATH + SEP + FILE_BASE_NAME
 today = get_date("today")
 yesterday = get_date("yesterday")
 mode = ""

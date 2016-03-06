@@ -6,3 +6,5 @@
 *.csv
 *.log
 Stock/package
+Stock/log
+Stock/data

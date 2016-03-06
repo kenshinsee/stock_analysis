@@ -46,17 +46,23 @@ class bcolors:
     UNDERLINE = '\033[4m'
     
 #-- print log  func
-def print_log(msg):
-    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    print bcolors.OKGREEN + "[" + now + "] " + msg + bcolors.ENDC
+def print_log(msg, tee_to_handler=None):
+	now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+	if not tee_to_handler is None:
+		tee_to_handler.write(msg + '\n')
+	print bcolors.OKGREEN + "[" + now + "] " + msg + bcolors.ENDC
 
-def warn_log(msg):
-    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    print bcolors.WARNING + "[" + now + "] " + msg + bcolors.ENDC
+def warn_log(msg, tee_to_handler=None):
+	now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+	if not tee_to_handler is None:
+		tee_to_handler.write(msg + '\n')
+	print bcolors.WARNING + "[" + now + "] " + msg + bcolors.ENDC
 
-def error_log(msg):
-    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    print bcolors.FAIL + "[" + now + "] " + msg + bcolors.ENDC
+def error_log(msg, tee_to_handler=None):
+	now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+	if not tee_to_handler is None:
+		tee_to_handler.write(msg + '\n')
+	print bcolors.FAIL + "[" + now + "] " + msg + bcolors.ENDC
 
 	
 def url_opener(head = {
@@ -103,7 +109,7 @@ def recent_working_day(in_date='today', is_skip_holiday=False, conn=None): # dat
 		
 	if is_skip_holiday:
 		if conn is None: 
-			raise RuntimeError('connection is missing when is_skip_holiday is enable.')
+			raise RuntimeError('connection is None which must be available when skip_holiday mode is on.')
 		else:
 			cur = get_cur(conn)
 			cur.execute('select date from dw.holiday') # yyyymmdd
