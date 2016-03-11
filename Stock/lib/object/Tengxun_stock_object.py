@@ -47,6 +47,7 @@ class Tengxun_stock_object:
 			self.__current_price = attr[3]
 			self.__yesterday_close_price = attr[4]
 			self.__open_price = attr[5]
+			self.__close_price = attr[3] # because it's an eod extract, the current price is the close price
 			self.__volume = attr[6] # round-lot
 			self.__outer_disc = attr[7] # round-lot
 			self.__inner_disc = attr[8] # round-lot
@@ -113,8 +114,8 @@ class Tengxun_stock_object:
 		return self.__yesterday_close_price
 	
 	@yesterday_close_price.setter
-	def yesterday_close_price(self, close_price):
-		self.__yesterday_close_price = close_price
+	def yesterday_close_price(self, yesterday_close_price):
+		self.__yesterday_close_price = yesterday_close_price
 		
 	@property
 	def open_price(self):
@@ -124,6 +125,14 @@ class Tengxun_stock_object:
 	def open_price(self, open_price):
 		self.__open_price = open_price
 
+	@property
+	def close_price(self):
+		return self.__close_price
+	
+	@yesterday_close_price.setter
+	def close_price(self, close_price):
+		self.__close_price = close_price
+				
 	@property
 	def volume(self):
 		return self.__volume
