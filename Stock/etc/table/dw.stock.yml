@@ -1,109 +1,131 @@
 biz_date: 
   type: date
+  is_pk: Y
   stock_object: 
     Tengxun_stock: date
 
 stock_id: 
   type: varchar
+  is_pk: Y
   stock_object:
     Tengxun_stock: code
 
 open_price: 
   type: number
+  is_pk: N
   stock_object:
     Tengxun_stock: open_price
 
 top_price: 
   type: number
+  is_pk: N
   stock_object: 
     Tengxun_stock: top_price
 
 floor_price:
   type: number
+  is_pk: N
   stock_object:
     Tengxun_stock: floor_price
 
 close_price: 
   type: number
+  is_pk: N
   stock_object: 
     Tengxun_stock: close_price
 
 adj_close_price: 
   type: number
+  is_pk: N
   stock_object: 
     Tengxun_stock: Null
 
 yesterday_close_price:
   type: number
+  is_pk: N
   stock_object:
     Tengxun_stock: yesterday_close_price
 
 volume: 
   type: number
+  is_pk: N
   stock_object: 
     Tengxun_stock: volume
 
 amount: 
   type: number
+  is_pk: N
   stock_object: 
     Tengxun_stock: amount
 
 outer_disc:
   type: number
+  is_pk: N
   stock_object: 
     Tengxun_stock: outer_disc
 
 inner_disc:
   type: number
+  is_pk: N
   stock_object: 
     Tengxun_stock: inner_disc
 
 rise_price:
   type: number
+  is_pk: N
   stock_object: 
     Tengxun_stock: rise_price
 
 rise: 
   type: number
+  is_pk: N
   stock_object: 
     Tengxun_stock: rise
 
 turnover_ratio: 
   type: number
+  is_pk: N
   stock_object: 
     Tengxun_stock: turnover_ratio
 
 PE_ratio: 
   type: number
+  is_pk: N
   stock_object: 
     Tengxun_stock: PE_ratio
 
 amplitudes: 
   type: number
+  is_pk: N
   stock_object: 
     Tengxun_stock: amplitudes
 
 circulation_market_value: 
   type: number
+  is_pk: N
   stock_object: 
     Tengxun_stock: circulation_market_value
 
 total_market_value: 
   type: number
+  is_pk: N
   stock_object: 
     Tengxun_stock: total_market_value
 
 PB_ratio: 
   type: number
+  is_pk: N
   stock_object: 
     Tengxun_stock: PB_ratio
 
 high_limit: 
   type: number
+  is_pk: N
   stock_object: 
     Tengxun_stock: high_limit
 
 low_limit: 
   type: number
+  is_pk: N
   stock_object: 
     Tengxun_stock: low_limit
