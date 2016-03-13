@@ -22,6 +22,7 @@ create table dw.stock(
   PB_ratio decimal(12,4),
   high_limit decimal(12,4),
   low_limit decimal(12,4),
+  source varchar(16),
   primary key(biz_date, stock_id)
 );
 alter table dw.stock add constraint fk_stock_id foreign key(stock_id) references dw.dim_stock(id);

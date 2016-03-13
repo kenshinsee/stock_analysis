@@ -23,6 +23,7 @@ class Yahoo_stock_object:
 			self.__close_price = attr[4]
 			self.__volume = round(float(attr[5]) / 100, 2) # share to round-lot
 			self.__adj_close_price = attr[6]
+			self.__source = 'Yahoo'
 	
 	@property
 	def code(self):
@@ -84,7 +85,14 @@ class Yahoo_stock_object:
 	def adj_close_price(self, adj_close_price):
 		self.__adj_close_price = adj_close_price
 
-
+	@property
+	def source(self):
+		return self.__source
+	
+	@source.setter
+	def source(self, source):
+		self.__source = source
+	
 if __name__ == "__main__":
 	s = Yahoo_stock_object(600101)
 	s.date = 20130501

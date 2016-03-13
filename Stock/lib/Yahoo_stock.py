@@ -26,6 +26,10 @@ class Yahoo_stock:
 		"60": "ss", 
 		"00": "sz", 
 		"30": "sz", 
+		"51": "ss",
+		"15": "sz",
+		"20": "sz",
+		"90": "ss",
 	}
 
 	def __init__(self, code, start_date="19000101", end_date="99991231"):
@@ -72,7 +76,7 @@ class Yahoo_stock:
 
 		
 if __name__ == "__main__":
-	s = Yahoo_stock("002547", "20160301", "20160305")
+	s = Yahoo_stock("900916", "20160301", "20160305")
 	print s.get_stock_content()
 	#objs = s.get_stock_object()
 	#for code in objs:

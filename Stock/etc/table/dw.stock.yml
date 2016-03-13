@@ -3,129 +3,181 @@ biz_date:
   is_pk: Y
   stock_object: 
     Tengxun_stock: date
+    Sina_stock: date
+    Yahoo_stock: date
 
 stock_id: 
   type: varchar
   is_pk: Y
   stock_object:
     Tengxun_stock: code
+    Sina_stock: code
+    Yahoo_stock: code
 
 open_price: 
   type: number
   is_pk: N
   stock_object:
     Tengxun_stock: open_price
+    Sina_stock: open_price
+    Yahoo_stock: open_price
 
 top_price: 
   type: number
   is_pk: N
   stock_object: 
     Tengxun_stock: top_price
+    Sina_stock: top_price
+    Yahoo_stock: top_price
 
 floor_price:
   type: number
   is_pk: N
   stock_object:
     Tengxun_stock: floor_price
+    Sina_stock: floor_price
+    Yahoo_stock: floor_price
 
 close_price: 
   type: number
   is_pk: N
   stock_object: 
     Tengxun_stock: close_price
+    Sina_stock: close_price
+    Yahoo_stock: close_price
 
 adj_close_price: 
   type: number
   is_pk: N
   stock_object: 
     Tengxun_stock: Null
+    Sina_stock: Null
+    Yahoo_stock: adj_close_price
 
 yesterday_close_price:
   type: number
   is_pk: N
   stock_object:
     Tengxun_stock: yesterday_close_price
+    Sina_stock: yesterday_close_price
+    Yahoo_stock: Null
 
 volume: 
   type: number
   is_pk: N
   stock_object: 
     Tengxun_stock: volume
+    Sina_stock: volume
+    Yahoo_stock: Null
 
 amount: 
   type: number
   is_pk: N
   stock_object: 
     Tengxun_stock: amount
+    Sina_stock: amount
+    Yahoo_stock: Null
 
 outer_disc:
   type: number
   is_pk: N
   stock_object: 
     Tengxun_stock: outer_disc
+    Sina_stock: Null
+    Yahoo_stock: Null
 
 inner_disc:
   type: number
   is_pk: N
   stock_object: 
     Tengxun_stock: inner_disc
+    Sina_stock: Null
+    Yahoo_stock: Null
 
 rise_price:
   type: number
   is_pk: N
   stock_object: 
     Tengxun_stock: rise_price
+    Sina_stock: Null
+    Yahoo_stock: Null
 
 rise: 
   type: number
   is_pk: N
   stock_object: 
     Tengxun_stock: rise
+    Sina_stock: Null
+    Yahoo_stock: Null
 
 turnover_ratio: 
   type: number
   is_pk: N
   stock_object: 
     Tengxun_stock: turnover_ratio
+    Sina_stock: Null
+    Yahoo_stock: Null
 
 PE_ratio: 
   type: number
   is_pk: N
   stock_object: 
     Tengxun_stock: PE_ratio
+    Sina_stock: Null
+    Yahoo_stock: Null
 
 amplitudes: 
   type: number
   is_pk: N
   stock_object: 
     Tengxun_stock: amplitudes
+    Sina_stock: Null
+    Yahoo_stock: Null
 
 circulation_market_value: 
   type: number
   is_pk: N
   stock_object: 
     Tengxun_stock: circulation_market_value
+    Sina_stock: Null
+    Yahoo_stock: Null
 
 total_market_value: 
   type: number
   is_pk: N
   stock_object: 
     Tengxun_stock: total_market_value
+    Sina_stock: Null
+    Yahoo_stock: Null
 
 PB_ratio: 
   type: number
   is_pk: N
   stock_object: 
     Tengxun_stock: PB_ratio
+    Sina_stock: Null
+    Yahoo_stock: Null
 
 high_limit: 
   type: number
   is_pk: N
   stock_object: 
     Tengxun_stock: high_limit
+    Sina_stock: Null
+    Yahoo_stock: Null
 
 low_limit: 
   type: number
   is_pk: N
   stock_object: 
     Tengxun_stock: low_limit
+    Sina_stock: Null
+    Yahoo_stock: Null
+
+source:
+  type: varchar
+  is_pk: N
+  stock_object: 
+    Tengxun_stock: source
+    Sina_stock: source
+    Yahoo_stock: source

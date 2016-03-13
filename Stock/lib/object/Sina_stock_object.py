@@ -66,6 +66,7 @@ class Sina_stock_object:
 		self.__code = code
 		if len(attr) > 0:
 			self.__open_price = attr[1]
+			self.__close_price = attr[3] # because it's an eod extract, the current price is the close price
 			self.__yesterday_close_price = attr[2]
 			self.__current_price = attr[3]
 			self.__top_price = attr[4]
@@ -96,6 +97,7 @@ class Sina_stock_object:
 			self.__sell_5_price = attr[29]
 			self.__date = attr[30]
 			self.__time = attr[31]
+			self.__source = 'Sina'
 
 	@property
 	def code(self):
@@ -108,14 +110,22 @@ class Sina_stock_object:
 	@open_price.setter
 	def open_price(self, open_price):
 		self.__open_price = open_price
+	
+	@property
+	def close_price(self):
+		return self.__close_price
+	
+	@open_price.setter
+	def close_price(self, close_price):
+		self.__close_price = close_price
 
 	@property
 	def yesterday_close_price(self):
 		return self.__yesterday_close_price
 	
 	@yesterday_close_price.setter
-	def yesterday_close_price(self, close_price):
-		self.__yesterday_close_price = close_price
+	def yesterday_close_price(self, yesterday_close_price):
+		self.__yesterday_close_price = yesterday_close_price
 
 	@property
 	def current_price(self):
@@ -189,7 +199,14 @@ class Sina_stock_object:
 	def time(self, time):
 		self.__time = time
 	
-
+	@property
+	def source(self):
+		return self.__source
+	
+	@source.setter
+	def source(self, source):
+		self.__source = source
+	
 if __name__ == "__main__":
 	s = Sina_stock_object(600101)
 	s.date = 20130501

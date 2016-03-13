@@ -55,9 +55,10 @@ def get_stock_list(conn):
 def download_to_file(stocks, stock_obj_name, to_file, log_fh, warn_fh):
 	#-- iterate stocks, download eod data from webside
 	fh = open(to_file, 'a')
+	num = 0
 	for s in stocks:
 		#-- call method of stock object to get content of url
-		print_log('%(object)s("%(stock)s", "dummy", "dummy")' % {'object': stock_obj_name, 'stock': s})
+		#print_log('%(object)s("%(stock)s", "dummy", "dummy")' % {'object': stock_obj_name, 'stock': s})
 		try:
 			obj = eval('%(object)s("%(stock)s", "dummy", "dummy")' % {'object': stock_obj_name, 'stock': s})
 			for k,v in obj.get_stock_content().items():
@@ -65,15 +66,20 @@ def download_to_file(stocks, stock_obj_name, to_file, log_fh, warn_fh):
 				fh.write(v + '\n')
 				if re.match(r'pv_none_match', v) or re.match(r'.+"";$', v): # match empty from tengxun and sina
 					warn_log('No content fetched for ' + k, warn_fh)
+				else:
+					num += 1
 		except KeyError:
 			warn_log(s[0:2] + ' is not setup in ' + stock_obj_name, warn_fh)
 			continue
 	fh.close()
+	print_log('{num} recoreds have been written into {file}.'.format(num=num, file=to_file), log_fh)
 	
-def insert_into_table(db_field_yaml, in_file, stock_object, conn):
+def insert_into_table(db_field_yaml, stock_obj_name, in_file, conn, log_fh, warn_fh):
 	# based on the fields mapping between db and object, db type defined in yaml, generate delete sql and insert sql, and fire to db
 	# this function could be used for any db insert, if yaml and object are setup properly
 	# python download_stock_eod.py -m load -f D:\\workspace\\Stock\\data\\stock_daily\\tengxun_20160304.txt
+	# python download_stock_eod.py -m load -o sina -f D:\\workspace\\Stock\\data\\stock_daily\\sina_20160307.txt
+
 	db_field_mapping = get_yaml(db_field_yaml)
 	tab_name = os.path.basename(db_field_yaml).replace('.yml', '') # yml file name as table name
 	tab_fields = [] # table field names
@@ -82,7 +88,7 @@ def insert_into_table(db_field_yaml, in_file, stock_object, conn):
 	obj_attrs = [] # attribute names in stock object
 	for k,v in db_field_mapping.items():
 		tab_type = v['type']
-		obj_attr = v['stock_object'][stock_object]
+		obj_attr = v['stock_object'][stock_obj_name]
 		if obj_attr != None: # If None|Null is set for fields in yml, remove the fields from insertion
 			tab_fields.append(k)
 			if v['is_pk'] == 'Y': tab_pk.append(k) # pk, delete before insert
@@ -91,12 +97,16 @@ def insert_into_table(db_field_yaml, in_file, stock_object, conn):
 	del_sql = 'delete from {tab_name} where 1=1 '.format(tab_name=tab_name)
 	ins_sql = 'insert into {tab_name}({fields}) '.format(tab_name=tab_name, fields=','.join(tab_fields))
 	# iterate each row in the file, insert into table
+	num = 0
 	with open(in_file) as f:
 		for row in f.readlines():
 			# get_stock_object_from_str is a function should be available in all the stock objects
 			# this function accepts the string returned from website and generate a dict for stock object
 			# the dict is like {stock: {date: object}}
-			stock_dict = eval('{object}.get_stock_object_from_str(row)'.format(object=stock_object, row=row))
+			if re.match(r'pv_none_match', row) or re.match(r'.+"";$', row): # match empty from tengxun and sina
+				warn_log('No content fetched for ' + k, warn_fh)
+				continue
+			stock_dict = eval('{object}.get_stock_object_from_str(row)'.format(object=stock_obj_name, row=row))
 			for stock in stock_dict: # for Tengxun or sina interface, there is just one stock in one stock dict
 				for date in stock_dict[stock]: # for Tengxun or sina interface, there is just one date in one stock dict
 					stock_obj = stock_dict[stock][date] # this object is stock implementation object
@@ -113,18 +123,22 @@ def insert_into_table(db_field_yaml, in_file, stock_object, conn):
 					final_value_sql = final_value_sql[0:-2]
 					del_complete_sql = del_sql + del_where
 					ins_complete_sql = ins_sql + ' values( ' + final_value_sql + ')'
-					print_log('Deleting [{stock},{date}] from {tab_name}...\n {sql}'.format(stock=stock,date=date,tab_name=tab_name,sql=del_complete_sql), log_fh)
-					print_log('Inserting [{stock},{date}] into {tab_name}...\n {sql}'.format(stock=stock,date=date,tab_name=tab_name,sql=ins_complete_sql), log_fh)
-					#cur = get_cur(conn)
-					#cur.execute(ins_complete_sql)
-					#conn.commit()
-					sys.exit()
+					#print_log('Deleting [{stock},{date}] from {tab_name}...\n {sql}'.format(stock=stock,date=date,tab_name=tab_name,sql=del_complete_sql), log_fh)
+					cur = get_cur(conn)
+					cur.execute(del_complete_sql)
+					cur.execute(ins_complete_sql)
+					print_log('Inserted [{stock},{date}] into {tab_name}.'.format(stock=stock,date=date,tab_name=tab_name), log_fh)
+					num += 1
+					if num % 1000 == 0: conn.commit()
+	conn.commit()
+	print_log('{num} recoreds have been written into {tab_name}.'.format(num=num, tab_name=tab_name), log_fh)
 
 					
 #-- parse input parameter, var assignment
 stock_object = {
-	"tengxun": 'Tengxun_stock',
-	"sina": 'Sina_stock',
+	'tengxun': 'Tengxun_stock',
+	'sina': 'Sina_stock',
+	'yahoo': 'Yahoo_stock',
 }
 
 if not options.object_class in stock_object:
@@ -172,9 +186,9 @@ if options.mode == 'download' or options.mode == 'downloadAndLoad':
 
 #-- load stock info into database
 if options.mode == 'load' or options.mode == 'downloadAndLoad':
-	insert_into_table(STOCK_YML, file_full_name, stock_object[options.object_class], conn)
+	insert_into_table(STOCK_YML, stock_object[options.object_class], file_full_name, conn, log_fh, warn_fh)
 
-
+#-- close connection
 conn.close()
 
 #-- complete

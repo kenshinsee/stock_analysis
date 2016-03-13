@@ -88,6 +88,7 @@ class Tengxun_stock_object:
 			self.__PB_ratio = attr[46]
 			self.__high_limit = attr[47]
 			self.__low_limit = attr[48]
+			self.__source = 'Tengxun'
 
 	@property
 	def code(self):
@@ -437,6 +438,13 @@ class Tengxun_stock_object:
 	def low_limit(self, low_limit):
 		self.__low_limit = low_limit
 	
+	@property
+	def source(self):
+		return self.__source
+	
+	@source.setter
+	def source(self, source):
+		self.__source = source
 	
 if __name__ == "__main__":
 	s = Tengxun_stock_object(600101)
