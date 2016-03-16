@@ -44,10 +44,7 @@ class Sina_stock:
 		out_object = {}
 		for code in self.get_stock_content():
 			out_object[code] = {}
-			#try: 
 			obj = Sina_stock_object(code, re.findall('\"(.+)\"', self.get_stock_content()[code])[0].split(","))
-			#except:
-			#	raise RuntimeError("Unknow stock. [" + code + "]") 
 			out_object[code][obj.date] = obj
 		return out_object
 
@@ -72,9 +69,8 @@ class Sina_stock:
 		
 if __name__ == "__main__":
 	#s = sina_stock("002708,002547")
-	#s = Sina_stock("600101")
-	#s = Sina_stock(600101,'20160305','20160305')
-	#print s.get_stock_content()['600101']
+	s = Sina_stock("600101")
+	print s.get_stock_content()['600101']
     #
 	#
 	#objs = s.get_stock_object()
@@ -82,9 +78,9 @@ if __name__ == "__main__":
 	#	for date in objs[code]:
 	#		print code, date, objs[code][date].open_price, objs[code][date].current_price, objs[code][date].date, objs[code][date].time
 	
-	obj = Sina_stock.get_stock_object_from_str('var hq_str_sz300374="恒通科技,18.760,18.800,19.200,20.650,17.500,19.200,19.220,2724272,51598032.370,34200,19.200,2100,19.190,200,19.180,5300,19.150,1300,19.100,600,19.220,18700,19.230,2200,19.250,1200,19.290,3100,19.300,2016-03-04,15:05:56,00";')
-	
-	for code in obj:
-		for date in obj[code]:
-			print code, date, obj[code][date].date, obj[code][date].top_price, obj[code][date].floor_price#, obj[code][date].high_limit, obj[code][date].low_limit
+	#obj = Sina_stock.get_stock_object_from_str('var hq_str_sz300374="恒通科技,18.760,18.800,19.200,20.650,17.500,19.200,19.220,2724272,51598032.370,34200,19.200,2100,19.190,200,19.180,5300,19.150,1300,19.100,600,19.220,18700,19.230,2200,19.250,1200,19.290,3100,19.300,2016-03-04,15:05:56,00";')
+	#
+	#for code in obj:
+	#	for date in obj[code]:
+	#		print code, date, obj[code][date].date, obj[code][date].top_price, obj[code][date].floor_price#, obj[code][date].high_limit, obj[code][date].low_limit
 	

@@ -55,29 +55,50 @@ class Yahoo_stock:
 			return self.__url_prefix + self.__code_symbol % {"code": self.__code, "code_loc": self.__code_loc_dict[self.__code[0:2]]} + replace_vars(self.__date_range, self.__day_slice)
 
 	def get_stock_content(self):
-		return urllib2.urlopen(self.get_url()).read().strip()
+		content = urllib2.urlopen(self.get_url()).read().strip()
+		content_add_stock_id = re.subn(r'\n', '\n' + self.__code + ',', content)[0] # the data return from Yahoo doesn't contain stock id, to keep format consistent with Sina and Tengxun, manually add stock id at first column
+		content_no_header = re.subn(r'^.+\n', '', content_add_stock_id)[0] # remove header
+		return {self.__code: content_no_header}
 		
 	def get_stock_object(self):
 		# one row for one day
-		out_object = {self.__code: {}}
-		buf = StringIO.StringIO(self.get_stock_content())
-		try: 
-			buf.readline() # remove header
-			for row in buf.readlines():
-				out_object[self.__code][row.strip().split(",")[0]] = Yahoo_stock_object(self.__code, row.strip().split(","))
-		except: 
-			#info=sys.exc_info()  
-			#print info[0],":",info[1]
-			raise RuntimeError("Unknow stock. [" + self.__code + "]") 
-		finally:
-			buf.close()
-			
+		out_object = {}
+		for code in self.get_stock_content(): # actually there is only one stock in yahoo class, just to meet the same format as sina and tengxun
+			out_object[code] = {}
+			buf = StringIO.StringIO(self.get_stock_content()[code])
+			try: 
+				for row in buf.readlines():
+					out_object[self.__code][row.strip().split(",")[1]] = Yahoo_stock_object(self.__code, row.strip().split(",")[1:])
+			except: 
+				raise RuntimeError("Unknow stock. [" + self.__code + "]") 
+			finally:
+				buf.close()
+				
 		return out_object
-
+		
+	@staticmethod
+	def get_stock_object_from_str(str):
+	# This method reads a str to create a stock object
+	# This method is for backload trades from a pre-stored file which contains stock info with the same format as calling from url
+		code = str.split(',')[0]
+		out_object = {}
+		out_object[code] = {}
+		obj = Yahoo_stock_object(code, str.split(',')[1:])
+		out_object[code][obj.date] = obj
+		return out_object
+	
+		
 		
 if __name__ == "__main__":
-	s = Yahoo_stock("900916", "20160301", "20160305")
-	print s.get_stock_content()
+	s = Yahoo_stock("300499", "20160310", "20160315")
+	print s.get_url()
+	print s.get_stock_content()['300499']
+	
+	#obj = Yahoo_stock.get_stock_object_from_str('900916,2016-03-04,0.88,0.895,0.856,0.867,722900,0.867')
+	#for code in obj:
+	#	for date in obj[code]:
+	#		print code, date, obj[code][date].date, obj[code][date].top_price, obj[code][date].floor_price
+
 	#objs = s.get_stock_object()
 	#for code in objs:
 	#	for date in objs[code]:

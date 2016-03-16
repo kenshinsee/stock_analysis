@@ -68,7 +68,7 @@ volume:
   stock_object: 
     Tengxun_stock: volume
     Sina_stock: volume
-    Yahoo_stock: Null
+    Yahoo_stock: volume
 
 amount: 
   type: number

@@ -6,7 +6,7 @@ create table dw.stock(
   top_price decimal(12,4),
   floor_price decimal(12,4),
   close_price decimal(12,4),
-  adj_close_price integer,
+  adj_close_price decimal(12,4),
   yesterday_close_price decimal(12,4), 
   volume decimal(22,2), --round-lot
   amount decimal(22,2), --10 thousands
