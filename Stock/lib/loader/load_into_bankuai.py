@@ -112,7 +112,6 @@ def load_into_bankuai(db_conn, file, biz_date=None ):
 			'leading_stock_id': r[k]['leading_stock_id'] if r[k]['leading_stock_id'] != '-' else '000000', # sometimes eastmoney doesn't return valid leading stock id, but '-', for this case, '000000' would replace it as an unknown stock id
 			'rise_of_leading_stock': r[k]['rise_of_leading_stock']
 			}
-
 		cur.execute(ins_sql)
 		
 	db_conn.commit()

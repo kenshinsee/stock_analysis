@@ -12,5 +12,5 @@ create table dw.bankuai(
   primary key(biz_date, bankuai_id)
 );
 alter table dw.bankuai add constraint fk_bankuai_id foreign key(bankuai_id) references dw.dim_bankuai(id);
-alter table dw.bankuai add constraint fk_leading_stock_id foreign key(leading_stock_id) references dw.dim_stock(id);
+--alter table dw.bankuai add constraint fk_leading_stock_id foreign key(leading_stock_id) references dw.dim_stock(id);
 
