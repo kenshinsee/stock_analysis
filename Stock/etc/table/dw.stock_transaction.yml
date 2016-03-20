@@ -1,0 +1,45 @@
+stock_id: 
+  type: varchar
+  stock_object: 
+    Xueqiu_stock: code
+    
+date: 
+  type: varchar
+  stock_object:
+    Xueqiu_stock: date
+
+time: 
+  type: varchar
+  stock_object:
+    Xueqiu_stock: time
+    
+trans_price: 
+  type: number
+  stock_object:
+    Xueqiu_stock: trans_price
+    
+price_change: 
+  type: number
+  stock_object:
+    Xueqiu_stock: price_change
+    
+volume: 
+  type: number
+  stock_object:
+    Xueqiu_stock: volume
+    
+amount: 
+  type: number
+  stock_object:
+    Xueqiu_stock: amount
+    
+buy_sell: 
+  type: number
+  stock_object:
+    Xueqiu_stock: buy_sell
+    
+source:
+  type: varchar
+  stock_object: 
+    Xueqiu_stock: source
+

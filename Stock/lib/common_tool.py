@@ -84,6 +84,27 @@ def read_url(url,timeout=100):
     opener = url_opener()
     return opener.open(url, timeout = timeout).read().strip()
 
+def get_file_from_url(url):
+    try:
+        opener=url_opener()
+        urllib2.install_opener(opener)
+        
+        req=urllib2.Request(url)
+        operate=opener.open(req)
+        data=operate.read()
+        return data
+    except BaseException, e:
+        print e
+        return None
+
+def save_file_from_url(file_name, url):
+    if url == None:
+        return
+    file=open(file_name, "wb")
+    file.write(get_file_from_url(url))
+    file.flush()
+    file.close()
+ 
     
 def return_new_name_for_existing_file(file):
     # If file already exists, generate a new name

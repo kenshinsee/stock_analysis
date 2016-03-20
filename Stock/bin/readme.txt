@@ -8,3 +8,6 @@
 
 # Install PyYAML
 -> http://pyyaml.org/wiki/PyYAML
+
+# Install xlrd
+-> https://pypi.python.org/pypi/xlrd
