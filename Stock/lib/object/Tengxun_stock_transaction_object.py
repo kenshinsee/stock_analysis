@@ -1,15 +1,15 @@
 #coding:utf-8
-#成交时间	成交价	价格变动	成交量（手）	成交额（元）	性质
-#09:30:03	52.2	0	        235	            1226570.2	    买盘
+#成交时间	成交价格	价格变动	成交量(手)	成交额(元)	性质
+#9:25:00	50.34		0.15		141			709794		买盘
 
 
-class Netease_stock_object:
+class Tengxun_stock_transaction_object:
 	
 	def __init__(self, code, date, attrs=[]):
 		self.__code = code
 		self.__date = date
 		self.__attrs = attrs
-		self.__source = 'Netease'
+		self.__source = 'Tengxun'
 	
 	@property
 	def code(self):
@@ -42,5 +42,5 @@ class Netease_stock_object:
 		return self.__source
 	
 if __name__ == "__main__":
-	s = Netease_stock_object(600101, 20130501, [])
+	s = Tengxun_stock_transaction_object(600101, 20130501, [])
 	print s.date

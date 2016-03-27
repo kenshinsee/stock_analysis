@@ -1,6 +1,21 @@
 #!/usr/local/bin/python2.7
 #coding:utf-8
 # This script is used to download the eod data to flat file and load data from flat file to db
+'''
+-> download (mode:download|load|downloadAndLoad, start_date:yyyymmdd, end_date:yyyymmdd)
+  -> download_to_local 
+    -> fetch stock list
+    -> set the number of concurrency (NOC by default 3)
+    -> iterator (iterate over list for each stock)
+      -> if NOC < 3, send downloader to queue, else wait...
+      -> downloader (stock, date, source=[tengxun, sina, netease])
+        -> write ing and lck file (file without source name)
+        -> download data to local (data file with source name)
+          -> if failed, retry 3 times
+            -> still fail, change source
+            -> failed for all the sources, mark is_download_success=N in database, and exit iterator
+          -> if succeeded, mark is_download_success=Y in database, and exit iterator
+'''
 
 import sys,os,re,datetime
 
@@ -11,8 +26,8 @@ from Sys_paths import Sys_paths
 from psql import get_conn, get_cur
 from db_func import insert_into_table
 
-from Xueqiu_stock import Xueqiu_stock
-from Netease_stock import Netease_stock
+from Tengxun_stock_transaction import Tengxun_stock_transaction
+from Netease_stock_transaction import Netease_stock_transaction
 
 #-- sys var
 SEP = os.path.sep
@@ -28,13 +43,14 @@ STOCK_YML = YML_DIR + SEP + "table" + SEP + "dw.stock_transaction.yml"
 now = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 
 stock_object = {
-    'xueqiu': 'Xueqiu_stock',
-    'netease': 'Netease_stock',
+    'tengxun': 'Tengxun_stock_transaction',
+    'netease': 'Netease_stock_transaction',
+    'sina': 'Sina_stock_transaction',
 }
 
 #-- opts
 parser = OptionParser()
-parser.add_option("--object_class", "-o", dest="object_class", action="store", default='xueqiu', help="Stock object class overwrites the hardcoded objects, " + '|'.join(stock_object.keys()))
+parser.add_option("--object_class", "-o", dest="object_class", action="store", default='netease', help="Stock object class overwrites the hardcoded objects, " + '|'.join(stock_object.keys()))
 parser.add_option("--mode", "-m", dest="mode", action="store", default='download', help="download|load|downloadAndLoad")
 parser.add_option("--file", "-f", dest="file", action="store", help="--file|-f is required for load mode")
 parser.add_option("--start_date", "-s", dest="start_date", action="store", default=recent_working_day, help="The default value is " + recent_working_day + ", the format is YYYYMMDD")
@@ -51,10 +67,13 @@ def exit_error(msg):
     error_log(msg)
     sys.exit()
 
-def get_stock_list(conn):
+def get_stock_list(conn,biz_date):
     # get stock list from db
     stocks = []
-    sel_query = "select id from dw.dim_stock where id <> '000000'"
+    sel_query = '''
+        select id from dw.dim_stock where id <> '000000' 
+        except 
+        select stock_id from dw.log_stock_transaction where biz_date = '{biz_date}' and is_download_success = 'Y' '''.format(biz_date=biz_date)
     cur = get_cur(conn)
     cur.execute(sel_query)
     rows = list(cur)
@@ -69,8 +88,8 @@ def download_to_file(stocks, stock_obj_name, start_date, end_date, to_file, log_
     num = 0
     cur_date_dt = datetime.datetime.strptime(start_date,'%Y%m%d')
     end_date_dt = datetime.datetime.strptime(end_date,'%Y%m%d')
-    for s in stocks:
-        while cur_date_dt <= end_date_dt:
+    while cur_date_dt <= end_date_dt:
+        for s in stocks:
             cur_date = cur_date_dt.strftime("%Y%m%d")
             #-- call method of stock object to get content of url
             try:
@@ -85,7 +104,7 @@ def download_to_file(stocks, stock_obj_name, start_date, end_date, to_file, log_
                         obj.download_to_local()
                     
                 content = obj.get_stock_content()[s][cur_date]
-                if stock_obj_name == 'Netease_stock': # encode data to gb2312 for netease, same coding as xueqiu
+                if stock_obj_name == 'Netease_stock': # encode data to gb2312 for netease, same coding as Tengxun
                     content = content.encode('gb2312')
                 print_log('Writing %(code)s on %(date)s...' % {'code': s, 'date': cur_date}, log_fh )
                 if content == u'暂无数据'.encode('gb2312'): 
@@ -93,18 +112,19 @@ def download_to_file(stocks, stock_obj_name, start_date, end_date, to_file, log_
                 else: 
                     fh.write(content + '\n')
                     num += 1
-                cur_date_dt = cur_date_dt + datetime.timedelta(1)
             except KeyError:
                 warn_log(s[0:2] + ' is not setup in ' + stock_obj_name, warn_fh)
                 continue
             except HTTPError: # log and skip for stocks couldn't be returned from stock interface
                 warn_log('Get content failed when ' + new_class, warn_fh)
                 continue
+        cur_date_dt = cur_date_dt + datetime.timedelta(1)
     fh.close()
     print_log('{num} stocks have been written into {file}.'.format(num=num, file=to_file), log_fh)
     
 
-
+    
+    
 #-- parse input parameter, var assignment
 # check validation of object class
 if not options.object_class in stock_object:
@@ -127,7 +147,6 @@ elif options.start_date > options.end_date:
     exit_error("Start date is greater then end date! [" + options.start_date + "][" + options.end_date + "]")
     
 #-- data file name
-
 if options.mode == 'load':
     file_full_name = options.file
     file_name = os.path.basename(file_full_name)

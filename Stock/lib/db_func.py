@@ -40,9 +40,9 @@ def insert_into_table(db_field_yaml, stock_obj_name, in_file, conn, log_fh, warn
 			# get_stock_object_from_str is a function should be available in all the stock objects
 			# this function accepts the string returned from website and generate a dict for stock object
 			# the dict is like {stock: {date: object}}
-			if re.match(r'pv_none_match', row) or re.match(r'.+"";$', row): # match empty from tengxun and sina
-				warn_log('No content fetched for ' + k, warn_fh)
-				continue
+			###if re.match(r'pv_none_match', row) or re.match(r'.+"";$', row): # match empty from tengxun and sina
+			###	warn_log('No content fetched for ' + k, warn_fh)
+			###	continue
 			# dynamically import object module, class name and file name should be identical
 			exec('from {object} import {object}'.format(object = stock_obj_name), globals())
 			stock_dict = eval('{object}.get_stock_object_from_str(row)'.format(object=stock_obj_name, row=row))
@@ -71,3 +71,4 @@ def insert_into_table(db_field_yaml, stock_obj_name, in_file, conn, log_fh, warn
 					if num % 1000 == 0: conn.commit()
 	conn.commit()
 	print_log('{num} records have been written into {tab_name}.'.format(num=num, tab_name=tab_name), log_fh)
+
