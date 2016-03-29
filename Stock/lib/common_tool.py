@@ -143,7 +143,8 @@ def recent_working_day(in_date='today', is_skip_holiday=False, conn=None): # dat
 		date_date = date_date + datetime.timedelta(-1)
 	
 	return date_date.strftime('%Y%m%d')
-	
+
+
 if __name__ == "__main__":
 	conn = get_conn("StockDb", "hong", "hong", "192.168.122.131", "5432")
 	print recent_working_day(is_skip_holiday=True, conn=conn)

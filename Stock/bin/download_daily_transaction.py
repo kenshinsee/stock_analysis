@@ -2,7 +2,7 @@
 #coding:utf-8
 # This script is used to download the eod data to flat file and load data from flat file to db
 '''
--> download (mode:download|load|downloadAndLoad, start_date:yyyymmdd, end_date:yyyymmdd)
+-> script (mode:download|load|downloadAndLoad, start_date:yyyymmdd, end_date:yyyymmdd)
   -> download_to_local 
     -> fetch stock list
     -> set the number of concurrency (NOC by default 3)
@@ -28,6 +28,7 @@ from db_func import insert_into_table
 
 from Tengxun_stock_transaction import Tengxun_stock_transaction
 from Netease_stock_transaction import Netease_stock_transaction
+from Sina_stock_transaction import Sina_stock_transaction
 
 #-- sys var
 SEP = os.path.sep
@@ -50,7 +51,6 @@ stock_object = {
 
 #-- opts
 parser = OptionParser()
-parser.add_option("--object_class", "-o", dest="object_class", action="store", default='netease', help="Stock object class overwrites the hardcoded objects, " + '|'.join(stock_object.keys()))
 parser.add_option("--mode", "-m", dest="mode", action="store", default='download', help="download|load|downloadAndLoad")
 parser.add_option("--file", "-f", dest="file", action="store", help="--file|-f is required for load mode")
 parser.add_option("--start_date", "-s", dest="start_date", action="store", default=recent_working_day, help="The default value is " + recent_working_day + ", the format is YYYYMMDD")
@@ -82,7 +82,7 @@ def get_stock_list(conn,biz_date):
     return stocks
 
 
-def download_to_file(stocks, stock_obj_name, start_date, end_date, to_file, log_fh, warn_fh):
+def download_to_file(stocks, stock_obj_name, start_date, end_date, to_file):
     #-- iterate stocks, download transaction data from webside
     fh = open(to_file, 'a')
     num = 0
@@ -106,34 +106,26 @@ def download_to_file(stocks, stock_obj_name, start_date, end_date, to_file, log_
                 content = obj.get_stock_content()[s][cur_date]
                 if stock_obj_name == 'Netease_stock': # encode data to gb2312 for netease, same coding as Tengxun
                     content = content.encode('gb2312')
-                print_log('Writing %(code)s on %(date)s...' % {'code': s, 'date': cur_date}, log_fh )
+                print_log('Writing %(code)s on %(date)s...' % {'code': s, 'date': cur_date} )
                 if content == u'暂无数据'.encode('gb2312'): 
-                    warn_log('No content fetched for ' + new_class, warn_fh)
+                    warn_log('No content fetched for ' + new_class)
                 else: 
                     fh.write(content + '\n')
                     num += 1
             except KeyError:
-                warn_log(s[0:2] + ' is not setup in ' + stock_obj_name, warn_fh)
+                warn_log(s[0:2] + ' is not setup in ' + stock_obj_name)
                 continue
             except HTTPError: # log and skip for stocks couldn't be returned from stock interface
-                warn_log('Get content failed when ' + new_class, warn_fh)
+                warn_log('Get content failed when ' + new_class)
                 continue
         cur_date_dt = cur_date_dt + datetime.timedelta(1)
     fh.close()
-    print_log('{num} stocks have been written into {file}.'.format(num=num, file=to_file), log_fh)
+    print_log('{num} stocks have been written into {file}.'.format(num=num, file=to_file))
     
 
     
-    
-#-- parse input parameter, var assignment
-# check validation of object class
-if not options.object_class in stock_object:
-    exit_error('%(entered_object)s is not a valid object, it could be %(valid_objects)s' % {'entered_object': options.object_class, 'valid_objects': '|' . join(stock_object)})
-else:
-    print_log(options.object_class + ' selected.')
-
 # check validation of mode and input file
-if not (options.mode == 'download' or options.mode == 'load' or options.mode == 'downloadAndLoad'):
+if not (options.mode in ['download', 'load', 'downloadAndLoad']):
     exit_error(mode + ' is not recognized, it could be download|load|downloadAndLoad.')
 elif options.mode == 'load' and options.file is None:
     exit_error('--file|-f is required when in load mode.')
@@ -145,28 +137,9 @@ if not (re.match("^\d{8}$", options.start_date) and re.match("^\d{8}$", options.
     exit_error("Not valid start_date or end_date! [" + options.start_date + "][" + options.end_date + "]")
 elif options.start_date > options.end_date:
     exit_error("Start date is greater then end date! [" + options.start_date + "][" + options.end_date + "]")
+
     
-#-- data file name
-if options.mode == 'load':
-    file_full_name = options.file
-    file_name = os.path.basename(file_full_name)
-else:
-    file_name = '{object_class}_{start_date}_{end_date}_{stock_id}.txt'.format(object_class = options.object_class, start_date = options.start_date, end_date = options.end_date, stock_id = 'all' if options.stock_id is None else options.stock_id)
-
-    file_full_name = return_new_name_for_existing_file(data_dir + SEP + file_name)
-    file_name = os.path.basename(file_full_name)
-
-#-- open log files
-log_file = LOG_DIR + SEP + file_name.replace('.txt', '.' + str(now) + '.log')
-warn_file = LOG_DIR + SEP + file_name.replace('.txt', '.' + str(now) + '.warn')
-error_file = LOG_DIR + SEP + file_name.replace('.txt', '.' + str(now) + '.err')
-
-log_fh = open(log_file, 'a')
-warn_fh = open(warn_file, 'a')
-error_fh = open(error_file, 'a')
-
-print_log('data file is ' + file_full_name, log_fh)
-
+    
 #-- fetch DB info
 db_dict = get_yaml(DB_YML)
 #-- open db connection
@@ -181,25 +154,21 @@ if options.mode == 'download' or options.mode == 'downloadAndLoad':
     elif ( not options.stock_id is None ) and ( not options.stock_id in stocks ):
         exit_error('Invalid stock id ' + options.stock_id)
     
-    download_to_file(stocks, stock_object[options.object_class], options.start_date, options.end_date, file_full_name, log_fh, warn_fh)
+    #download_to_file(stocks, stock_object[options.object_class], options.start_date, options.end_date, file_full_name)
+    
+    cur_date_dt = datetime.datetime.strptime(options.start_date,'%Y%m%d')
+    end_date_dt = datetime.datetime.strptime(options.end_date,'%Y%m%d')
+    while cur_date_dt <= end_date_dt:    
+    
+        cur_date_dt = cur_date_dt + datetime.timedelta(1)
+    
     
 #-- load stock info into database
 if options.mode == 'load' or options.mode == 'downloadAndLoad':
-    insert_into_table(STOCK_YML, stock_object[options.object_class], file_full_name, conn, log_fh, warn_fh)
+    pass
 
 
 #-- close connection
 conn.close()
-
-#-- complete
-print_log('log file: ' + log_file, log_fh)
-print_log('warn file: ' + warn_file, log_fh)
-print_log('error file: ' + error_file, log_fh)
-
-log_fh.close()
-warn_fh.close()
-error_fh.close()
-
-#-- parsing log file
 
 
