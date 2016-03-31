@@ -91,7 +91,7 @@ class Netease_stock_transaction:
         
         out_object = {}
         out_object[code] = {}
-        out_object[code][date] = Netease_stock_transaction_transaction_object(code, date, rows)
+        out_object[code][date] = Netease_stock_transaction_object(code, date, rows)
         return out_object
     
         
