@@ -16,13 +16,20 @@ class Sina_stock_transaction:
     __date_symbol = "date=%(date)s"
     __code_symbol = "&symbol=%(code_loc)s%(code)s"
     __code_loc_dict = {
-        "60": "sh", 
-        "00": "sz", 
-        "30": "sz", 
-        "51": "sh",
-        "15": "sz",
-        "20": "sz",
-        "90": "sh",
+    #    "60": "sh", 
+    #    "00": "sz", 
+    #    "30": "sz", 
+    #    "51": "sh",
+    #    "15": "sz",
+    #    "20": "sz",
+    #    "90": "sh",
+        "6": "sh", 
+        "0": "sz", 
+        "3": "sz", 
+        "5": "sh",
+        "1": "sz",
+        "2": "sz",
+        "9": "sh",
     }
 
     def __init__(self, code, date):
@@ -42,7 +49,7 @@ class Sina_stock_transaction:
         self.__download_file = file
         
     def get_url(self):
-            return self.__url_prefix + self.__date_symbol % {"date": self.__date[0:4] + '-' + self.__date[4:6] + '-' + self.__date[6:8]} + self.__code_symbol % {"code": self.__code, "code_loc": self.__code_loc_dict[self.__code[0:2]]}
+            return self.__url_prefix + self.__date_symbol % {"date": self.__date[0:4] + '-' + self.__date[4:6] + '-' + self.__date[6:8]} + self.__code_symbol % {"code": self.__code, "code_loc": self.__code_loc_dict[self.__code[0:1]]}
     
     def download_to_local(self):
         print_log('Reading data from ' + self.get_url())
@@ -60,7 +67,7 @@ class Sina_stock_transaction:
                 if row_idx == 1: continue
                 row_add_stock_id_date =str(self.__code) + '\t' + self.__date + '\t' + row #+ '\n'
                 out_content = out_content + row_add_stock_id_date.replace('--', '0.00')
-        out_dict[self.__code][self.__date] = out_content
+        out_dict[self.__code][self.__date] = out_content # gb2312
         return out_dict
         
     def get_stock_object(self):
@@ -99,10 +106,8 @@ class Sina_stock_transaction:
         
         
 if __name__ == "__main__":
-    s = Sina_stock_transaction("300499", "20160325")#Sina_stock_transaction("300499", "20160317")
-    #s.download_to_local()
-    #c = s.get_stock_content()
-    #print c['300499']['20160325']
+    s = Sina_stock_transaction("000005", "20160401")
+    s.download_to_local()
 
     obj = s.get_stock_object()#['300499']['20160317']
     for code in obj:

@@ -58,7 +58,7 @@ class Netease_stock_transaction:
             out_content = out_content + self.__code + '\t' + self.__date + '\t' + sheet.cell(row_idx,0).value + '\t' + str(sheet.cell(row_idx,1).value) + '\t' + str(sheet.cell(row_idx,2).value) + '\t' + str(sheet.cell(row_idx,3).value) + '\t' + str(sheet.cell(row_idx,4).value) + '\t' + sheet.cell(row_idx,5).value + '\n'
         out_dict = {}
         out_dict[self.__code] = {}
-        out_dict[self.__code][self.__date] = out_content
+        out_dict[self.__code][self.__date] = out_content.encode('gb2312')
         return out_dict
         
     def get_stock_object(self):
