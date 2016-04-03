@@ -4,8 +4,8 @@
 import sys,os,re,datetime,csv
 
 from optparse import OptionParser
-from common_tool import replace_vars, print_log, warn_log, error_log, get_date, get_yaml
-from psql import get_conn, get_cur
+from tooling.common_tool import replace_vars, print_log, warn_log, error_log, get_date, get_yaml
+from tooling.psql import get_conn, get_cur
 from Sys_paths import Sys_paths
 
 

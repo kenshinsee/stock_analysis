@@ -1,11 +1,16 @@
 #!/usr/local/bin/python2.7
 #coding:utf8
+# This module is to call object impl classes to download stock transaction data
+# It downloads raw data from internet and convert it into a standard format
+# It is an implementation of threading, and it put a spaceholder into queue when it gets started and remove it from queue when it is finished, so the outer caller could count on the queue size to see how many threads are running.
+
+
 import random,threading,time,os
 from Queue import Queue
 from Sys_paths import Sys_paths
-from psql import get_conn, get_cur
-from common_tool import replace_vars, print_log, error_log, warn_log, get_date, recent_working_day, get_yaml, return_new_name_for_existing_file
-import traceback  
+from tooling.psql import get_conn, get_cur
+from tooling.common_tool import replace_vars, print_log, error_log, warn_log, get_date, recent_working_day, get_yaml, return_new_name_for_existing_file
+import traceback
 
 #-- sys var
 SEP = os.path.sep
@@ -19,7 +24,8 @@ class Stock_trans_downloader(threading.Thread):
         self.conn = conn
         self.stock_id = stock_id
         self.date = date
-        exec('from {object} import {object}'.format(object = stock_trans_obj_name), globals())
+        self.stock_trans_obj_name = stock_trans_obj_name
+        exec('from object_impl.{object} import {object}'.format(object = stock_trans_obj_name), globals())
         self.stock_trans_object = eval("{object}('{code}', '{date}')".format(object=stock_trans_obj_name, code=str(stock_id), date=date))
         #by default, store the out file into the same directory as download file
         self.out_file = ( os.path.dirname(self.stock_trans_object.download_file) + SEP + stock_id + '.txt' ) if in_out_file == None else in_out_file
@@ -33,8 +39,8 @@ class Stock_trans_downloader(threading.Thread):
         return self.row_id
         
     def insert_log_table(self):
-        ins_sql = '''insert into dw.log_stock_transaction ( row_id, biz_date, stock_id, download_start_time ) values ( {row_id}, '{date}', '{stock}', '{start_time}' )
-        '''.format(row_id=self.row_id, date=self.date, stock=self.stock_id, start_time=time.ctime())
+        ins_sql = '''insert into dw.log_stock_transaction ( row_id, biz_date, stock_id, download_start_time, download_source ) values ( {row_id}, '{date}', '{stock}', '{start_time}', '{stock_trans_obj_name}' )
+        '''.format(row_id=self.row_id, date=self.date, stock=self.stock_id, start_time=time.ctime(), stock_trans_obj_name=self.stock_trans_obj_name)
         cur = get_cur(conn)
         cur.execute(ins_sql)
         conn.commit()
@@ -65,8 +71,6 @@ class Stock_trans_downloader(threading.Thread):
 
     def run(self):
         self.queue.put(self.getName())
-        print 'queue name: ' + self.getName() + ' joined.'
-        print 'queue size at the moment: ' + str(self.queue.qsize())
         row_id = self.get_row_id()
         self.insert_log_table()
         try:
@@ -79,7 +83,6 @@ class Stock_trans_downloader(threading.Thread):
             raise RuntimeError('Download {stock_id} for {date} failed.'.format(stock_id=self.stock_id, date=self.date))
         finally:
             queue_name = self.queue.get()
-            print 'queue name: ' + queue_name + ' shifted out.'
     
     
 if __name__ == '__main__':
@@ -88,16 +91,17 @@ if __name__ == '__main__':
     db_dict = get_yaml(DB_YML)
     #-- open db connection
     conn = get_conn(db_dict["DB"], db_dict["Username"], db_dict["Password"], db_dict["Host"], db_dict["Port"])
- 
+
     s = Stock_trans_downloader(queue, conn, 'Netease_stock_transaction', '300244', '20160401')
     s1 = Stock_trans_downloader(queue, conn, 'Sina_stock_transaction', '000005', '20160401')
     s2 = Stock_trans_downloader(queue, conn, 'Tengxun_stock_transaction', '600100', '20160401')
+
     s.start()
     s1.start()
     s2.start()
+
     s.join()
     s1.join()
     s2.join()
-
-    print 'queue size at the moment: ' + str(queue.qsize())
+    
     print 'All done.'

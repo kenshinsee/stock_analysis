@@ -15,7 +15,7 @@
 
 import urllib2,re,sys,datetime
 from object.Yahoo_stock_object import Yahoo_stock_object
-from common_tool import replace_vars
+from tooling.common_tool import replace_vars
 import StringIO
 
 class Yahoo_stock:

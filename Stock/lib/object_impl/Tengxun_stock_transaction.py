@@ -2,41 +2,34 @@
 #------------------------------------
 #-- Sina stock transaction api 
 #------------------------------------
-# http://market.finance.sina.com.cn/downxls.php?date=2016-01-25&symbol=sh600038
+# http://market.finance.sina.com.cn/downxls.php?date=2016-03-25&symbol=sh600038
 # Sina provides the recent 2 months transaction details
 
 import urllib2,re,sys,datetime,os
 import StringIO
-from common_tool import save_file_from_url, print_log
+from tooling.common_tool import save_file_from_url, print_log
 from Sys_paths import Sys_paths
-from object.Sina_stock_transaction_object import Sina_stock_transaction_object
+from object.Tengxun_stock_transaction_object import Tengxun_stock_transaction_object
 
-class Sina_stock_transaction:
-    __url_prefix = "http://market.finance.sina.com.cn/downxls.php?"
-    __date_symbol = "date=%(date)s"
-    __code_symbol = "&symbol=%(code_loc)s%(code)s"
+class Tengxun_stock_transaction:
+    __url_prefix = "http://stock.gtimg.cn/data/index.php?appn=detail&action=download"
+    __code_symbol = "&c=%(code_loc)s%(code)s"
+    __date_symbol = "&d=%(date)s"
     __code_loc_dict = {
-    #    "60": "sh", 
-    #    "00": "sz", 
-    #    "30": "sz", 
-    #    "51": "sh",
-    #    "15": "sz",
-    #    "20": "sz",
-    #    "90": "sh",
-        "6": "sh", 
-        "0": "sz", 
-        "3": "sz", 
-        "5": "sh",
-        "1": "sz",
-        "2": "sz",
-        "9": "sh",
+        "60": "sh", 
+        "00": "sz", 
+        "30": "sz", 
+        "51": "sh",
+        "15": "sz",
+        "20": "sz",
+        "90": "sh",
     }
 
     def __init__(self, code, date):
         self.__code = str(code)
         self.__date = str(date)
         self.__download_file_dir = Sys_paths.DATA_STOCK_TRANSACTION + Sys_paths.SEP + str(date)
-        self.__download_file = self.__download_file_dir + Sys_paths.SEP + 'Sina_' + self.__date + '_' + self.__code + '.txt'
+        self.__download_file = self.__download_file_dir + Sys_paths.SEP + 'tengxun_' + self.__date + '_' + self.__code + '.txt'
         if not os.path.exists(self.__download_file_dir):
             os.mkdir(self.__download_file_dir)
         
@@ -49,7 +42,7 @@ class Sina_stock_transaction:
         self.__download_file = file
         
     def get_url(self):
-            return self.__url_prefix + self.__date_symbol % {"date": self.__date[0:4] + '-' + self.__date[4:6] + '-' + self.__date[6:8]} + self.__code_symbol % {"code": self.__code, "code_loc": self.__code_loc_dict[self.__code[0:1]]}
+            return self.__url_prefix + self.__code_symbol % {"code": self.__code, "code_loc": self.__code_loc_dict[self.__code[0:2]]} + self.__date_symbol % {"date": self.__date}
     
     def download_to_local(self):
         print_log('Reading data from ' + self.get_url())
@@ -66,8 +59,8 @@ class Sina_stock_transaction:
                 row_idx += 1
                 if row_idx == 1: continue
                 row_add_stock_id_date =str(self.__code) + '\t' + self.__date + '\t' + row #+ '\n'
-                out_content = out_content + row_add_stock_id_date.replace('--', '0.00')
-        out_dict[self.__code][self.__date] = out_content # gb2312
+                out_content = out_content + row_add_stock_id_date
+        out_dict[self.__code][self.__date] = out_content
         return out_dict
         
     def get_stock_object(self):
@@ -79,7 +72,7 @@ class Sina_stock_transaction:
                 rows = []
                 for row in buf.readlines():
                     rows.append(row.split('\t')[2:])
-                out_object[code][date] = Sina_stock_transaction_object(code, date, rows)
+                out_object[code][date] = Tengxun_stock_transaction_object(code, date, rows)
                 buf.close()
         return out_object
         
@@ -100,14 +93,16 @@ class Sina_stock_transaction:
         
         out_object = {}
         out_object[code] = {}
-        out_object[code][date] = Sina_stock_transaction_object(code, date, rows)
+        out_object[code][date] = Tengxun_stock_transaction_object(code, date, rows)
         return out_object
     
         
         
 if __name__ == "__main__":
-    s = Sina_stock_transaction("000005", "20160401")
-    s.download_to_local()
+    s = Tengxun_stock_transaction("300499", "20160325")#Tengxun_stock_transaction("300499", "20160317")
+    #s.download_to_local()
+    #c = s.get_stock_content()
+    #print c['300499']['20160325']
 
     obj = s.get_stock_object()#['300499']['20160317']
     for code in obj:

@@ -2,8 +2,8 @@
 #coding:utf-8
 
 import sys,os,re,datetime,yaml,csv
-from common_tool import replace_vars, print_log, warn_log, error_log, get_date, get_yaml
-from psql import get_conn, get_cur
+from tooling.common_tool import replace_vars, print_log, warn_log, error_log, get_date, get_yaml
+from tooling.psql import get_conn, get_cur
 
 def load_into_bankuai(db_conn, file, biz_date=None ):
 

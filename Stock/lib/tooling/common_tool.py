@@ -1,5 +1,5 @@
 import sys,os,re,datetime,cookielib,urllib,urllib2,yaml
-from psql import get_conn, get_cur
+from tooling.psql import get_conn, get_cur
 
 def replace_vars(str, map):
     out_str = str

@@ -1,7 +1,7 @@
 import sys,os,re,datetime,cookielib,urllib,urllib2,yaml
-from psql import get_conn, get_cur
+from tooling.psql import get_conn, get_cur
 from urllib2 import HTTPError
-from common_tool import replace_vars, print_log, error_log, warn_log, get_date, recent_working_day, get_yaml, return_new_name_for_existing_file
+from tooling.common_tool import replace_vars, print_log, error_log, warn_log, get_date, recent_working_day, get_yaml, return_new_name_for_existing_file
 
 #the script will dynamically load module, no need to load class modules at the beginning
 #from Sina_stock import Sina_stock
@@ -44,8 +44,8 @@ def insert_into_table(db_field_yaml, stock_obj_name, in_file, conn, log_fh, warn
             ###    warn_log('No content fetched for ' + k, warn_fh)
             ###    continue
             # dynamically import object module, class name and file name should be identical
-            exec('from {object} import {object}'.format(object = stock_obj_name), globals())
-            stock_dict = eval('{object}.get_stock_object_from_str(row)'.format(object=stock_obj_name, row=row))
+            exec('from object_impl.{object} import {object}'.format(object = stock_obj_name), globals())
+            stock_dict = eval('object_impl.{object}.get_stock_object_from_str(row)'.format(object=stock_obj_name, row=row))
             for stock in stock_dict: # for Tengxun or sina interface, there is just one stock in one stock dict
                 for date in stock_dict[stock]: # for Tengxun or sina interface, there is just one date in one stock dict
                     stock_obj = stock_dict[stock][date] # this object is stock implementation object

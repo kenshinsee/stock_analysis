@@ -1,34 +1,42 @@
 #coding:utf-8
 #------------------------------------
-#-- Netease stock transaction api 
+#-- Sina stock transaction api 
 #------------------------------------
-# http://quotes.money.163.com/cjmx/2016/20160318/0600594.xls
-# http://quotes.money.163.com/cjmx/2016/20160318/1000004.xls
-# Netease provides the recent 4 days' transaction details
+# http://market.finance.sina.com.cn/downxls.php?date=2016-01-25&symbol=sh600038
+# Sina provides the recent 2 months transaction details
 
-import urllib2,re,sys,datetime,xlrd,StringIO,os
-from common_tool import save_file_from_url, print_log
+import urllib2,re,sys,datetime,os
+import StringIO
+from tooling.common_tool import save_file_from_url, print_log
 from Sys_paths import Sys_paths
-from object.Netease_stock_transaction_object import Netease_stock_transaction_object
+from object.Sina_stock_transaction_object import Sina_stock_transaction_object
 
-class Netease_stock_transaction:
-    __url_prefix = "http://quotes.money.163.com/cjmx"
-    __code_symbol = "/%(year)s/%(date)s/%(code_loc)s%(code)s.xls"
+class Sina_stock_transaction:
+    __url_prefix = "http://market.finance.sina.com.cn/downxls.php?"
+    __date_symbol = "date=%(date)s"
+    __code_symbol = "&symbol=%(code_loc)s%(code)s"
     __code_loc_dict = {
-        "60": "0", 
-        "00": "1", 
-        "30": "1", 
-        "51": "0",
-        "15": "1",
-        "20": "1",
-        "90": "0",
+    #    "60": "sh", 
+    #    "00": "sz", 
+    #    "30": "sz", 
+    #    "51": "sh",
+    #    "15": "sz",
+    #    "20": "sz",
+    #    "90": "sh",
+        "6": "sh", 
+        "0": "sz", 
+        "3": "sz", 
+        "5": "sh",
+        "1": "sz",
+        "2": "sz",
+        "9": "sh",
     }
 
     def __init__(self, code, date):
         self.__code = str(code)
         self.__date = str(date)
         self.__download_file_dir = Sys_paths.DATA_STOCK_TRANSACTION + Sys_paths.SEP + str(date)
-        self.__download_file = self.__download_file_dir + Sys_paths.SEP + 'netease_' + self.__date + '_' + self.__code + '.xls'
+        self.__download_file = self.__download_file_dir + Sys_paths.SEP + 'Sina_' + self.__date + '_' + self.__code + '.txt'
         if not os.path.exists(self.__download_file_dir):
             os.mkdir(self.__download_file_dir)
         
@@ -41,24 +49,25 @@ class Netease_stock_transaction:
         self.__download_file = file
         
     def get_url(self):
-        return self.__url_prefix + self.__code_symbol % {"year": self.__date[0:4], "date": self.__date, "code": self.__code, "code_loc": self.__code_loc_dict[self.__code[0:2]]}
-
+            return self.__url_prefix + self.__date_symbol % {"date": self.__date[0:4] + '-' + self.__date[4:6] + '-' + self.__date[6:8]} + self.__code_symbol % {"code": self.__code, "code_loc": self.__code_loc_dict[self.__code[0:1]]}
+    
     def download_to_local(self):
         print_log('Reading data from ' + self.get_url())
         save_file_from_url(self.__download_file, self.get_url())
         print_log('Data saved to ' + self.__download_file)
         
     def get_stock_content(self):
-        #read from xls file, save data as flat file seperate each column by \t and remove header
-        workbook = xlrd.open_workbook(self.__download_file)
-        sheet = workbook.sheets()[0]
-        out_content = ''
-        for row_idx in range(sheet.nrows):
-            if row_idx == 0: continue
-            out_content = out_content + self.__code + '\t' + self.__date + '\t' + sheet.cell(row_idx,0).value + '\t' + str(sheet.cell(row_idx,1).value) + '\t' + str(sheet.cell(row_idx,2).value) + '\t' + str(sheet.cell(row_idx,3).value) + '\t' + str(sheet.cell(row_idx,4).value) + '\t' + sheet.cell(row_idx,5).value + '\n'
         out_dict = {}
         out_dict[self.__code] = {}
-        out_dict[self.__code][self.__date] = out_content.encode('gb2312')
+        row_idx = 0
+        out_content = ''
+        with open(self.__download_file) as f:
+            for row in f.readlines():
+                row_idx += 1
+                if row_idx == 1: continue
+                row_add_stock_id_date =str(self.__code) + '\t' + self.__date + '\t' + row #+ '\n'
+                out_content = out_content + row_add_stock_id_date.replace('--', '0.00')
+        out_dict[self.__code][self.__date] = out_content # gb2312
         return out_dict
         
     def get_stock_object(self):
@@ -70,7 +79,7 @@ class Netease_stock_transaction:
                 rows = []
                 for row in buf.readlines():
                     rows.append(row.split('\t')[2:])
-                out_object[code][date] = Netease_stock_transaction_object(code, date, rows)
+                out_object[code][date] = Sina_stock_transaction_object(code, date, rows)
                 buf.close()
         return out_object
         
@@ -91,17 +100,16 @@ class Netease_stock_transaction:
         
         out_object = {}
         out_object[code] = {}
-        out_object[code][date] = Netease_stock_transaction_object(code, date, rows)
+        out_object[code][date] = Sina_stock_transaction_object(code, date, rows)
         return out_object
     
         
         
 if __name__ == "__main__":
-    s = Netease_stock_transaction("300499", "20160325")
-    #s.download_to_local()
-    #c = s.get_stock_content()
-    #print c['300499']['20160325']
-    obj = s.get_stock_object()#['300499']['20160318']
+    s = Sina_stock_transaction("000005", "20160401")
+    s.download_to_local()
+
+    obj = s.get_stock_object()#['300499']['20160317']
     for code in obj:
         for date in obj[code]:
             print code, date, obj[code][date].attrs_in_dict[1]['buy_sell']
