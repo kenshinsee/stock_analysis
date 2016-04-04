@@ -32,7 +32,7 @@ class Stock_trans_downloader(threading.Thread):
 
     def get_row_id(self):
         row_id_sql = "select nextval('dw.seq_log_stock_trans_row_id') as row_id"
-        cur = get_cur(conn)
+        cur = get_cur(self.conn)
         cur.execute(row_id_sql)
         db_rows = list(cur)
         self.row_id = db_rows[0]['row_id']
@@ -41,18 +41,18 @@ class Stock_trans_downloader(threading.Thread):
     def insert_log_table(self):
         ins_sql = '''insert into dw.log_stock_transaction ( row_id, biz_date, stock_id, download_start_time, download_source ) values ( {row_id}, '{date}', '{stock}', '{start_time}', '{stock_trans_obj_name}' )
         '''.format(row_id=self.row_id, date=self.date, stock=self.stock_id, start_time=time.ctime(), stock_trans_obj_name=self.stock_trans_obj_name)
-        cur = get_cur(conn)
+        cur = get_cur(self.conn)
         cur.execute(ins_sql)
-        conn.commit()
+        self.conn.commit()
     
     def update_log_table(self, is_success=True):
         ins_sql = '''update dw.log_stock_transaction 
         set download_end_time = '{end_time}', is_download_success = '{is_success}'
         where row_id = {row_id}
         '''.format(row_id=self.row_id, end_time=time.ctime(), is_success='Y' if is_success else 'N')
-        cur = get_cur(conn)
+        cur = get_cur(self.conn)
         cur.execute(ins_sql)
-        conn.commit()
+        self.conn.commit()
 
     def download_to_local(self):
         # save raw data into local
@@ -61,7 +61,8 @@ class Stock_trans_downloader(threading.Thread):
             print_log(self.stock_trans_object.download_file + ' already exists.')
         else:
             self.stock_trans_object.download_to_local()
-    
+        return self.stock_trans_object.download_file
+        
     def save_formatted_data(self):
         # save formatted data into file, \t as delimiter
         # 9:25:00    50.34   0.15    141 709794  买盘
@@ -74,9 +75,10 @@ class Stock_trans_downloader(threading.Thread):
         row_id = self.get_row_id()
         self.insert_log_table()
         try:
-            self.download_to_local()
+            download_file = self.download_to_local()
             self.update_log_table(is_success=True)
             self.save_formatted_data()
+            os.remove(download_file) 
         except:
             traceback.print_exc()
             self.update_log_table(is_success=False)

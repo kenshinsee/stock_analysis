@@ -45,7 +45,7 @@ def insert_into_table(db_field_yaml, stock_obj_name, in_file, conn, log_fh, warn
             ###    continue
             # dynamically import object module, class name and file name should be identical
             exec('from object_impl.{object} import {object}'.format(object = stock_obj_name), globals())
-            stock_dict = eval('object_impl.{object}.get_stock_object_from_str(row)'.format(object=stock_obj_name, row=row))
+            stock_dict = eval('{object}.get_stock_object_from_str(row)'.format(object=stock_obj_name, row=row))
             for stock in stock_dict: # for Tengxun or sina interface, there is just one stock in one stock dict
                 for date in stock_dict[stock]: # for Tengxun or sina interface, there is just one date in one stock dict
                     stock_obj = stock_dict[stock][date] # this object is stock implementation object

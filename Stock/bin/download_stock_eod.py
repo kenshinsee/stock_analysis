@@ -31,7 +31,7 @@ now = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 #-- opts
 parser = OptionParser()
 parser.add_option("--object_class", "-o", dest="object_class", action="store", default='tengxun', help="Stock object class overwrites the hardcoded objects, sina|tengxun|yahoo")
-parser.add_option("--mode", "-m", dest="mode", action="store", default='download', help="download|load|downloadAndLoad")
+parser.add_option("--mode", "-m", dest="mode", action="store", default='downloadAndLoad', help="download|load|downloadAndLoad")
 parser.add_option("--file", "-f", dest="file", action="store", help="--file|-f is required for load mode")
 parser.add_option("--start_date", "-s", dest="start_date", action="store", help="--start_date|-s is required for yahoo class, the format is YYYYMMDD")
 parser.add_option("--end_date", "-e", dest="end_date", action="store", help="--end_date|-e is required for yahoo class, the format is YYYYMMDD")
@@ -162,6 +162,7 @@ if options.mode == 'load' or options.mode == 'downloadAndLoad':
 
 
 #-- close connection
+conn.commit()
 conn.close()
 
 #-- complete
