@@ -4,8 +4,8 @@
 import sys,os,re,datetime,csv
 
 from optparse import OptionParser
-from common_tool import replace_vars, print_log, warn_log, error_log, get_date, get_yaml, recent_working_day
-from psql import get_conn, get_cur
+from tooling.common_tool import replace_vars, print_log, warn_log, error_log, get_date, get_yaml, recent_working_day
+from tooling.psql import get_conn, get_cur
 from Sys_paths import Sys_paths
 from loader.load_into_dim_bankuai import load_into_dim_bankuai
 from loader.load_into_dim_stock import load_into_dim_stock

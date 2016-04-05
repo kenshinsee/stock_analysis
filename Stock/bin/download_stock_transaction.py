@@ -56,13 +56,21 @@ def exit_error(msg):
     error_log(msg)
     sys.exit()
 
-def get_stock_list(conn,biz_date):
+def get_stock_list(conn, biz_date, stock_id):
     # get stock list from db
     stocks = []
-    sel_query = '''
-        select id from dw.dim_stock where id <> '000000' and is_valid = 'Y'
-        except 
-        select stock_id from dw.log_stock_transaction where biz_date = '{biz_date}' and is_download_success = 'Y' '''.format(biz_date=biz_date)
+    if not stock_id is None:
+        sel_query = '''
+            select id from dw.dim_stock where id <> '000000' and is_valid = 'Y' and id = '{stock_id}'
+            except 
+            select stock_id from dw.log_stock_transaction where biz_date = '{biz_date}' and is_download_success = 'Y' and stock_id = '{stock_id}'
+            '''.format(stock_id=stock_id, biz_date=biz_date)
+    else:
+        sel_query = '''
+            select id from dw.dim_stock where id <> '000000' and is_valid = 'Y'
+            except 
+            select stock_id from dw.log_stock_transaction where biz_date = '{biz_date}' and is_download_success = 'Y' 
+            '''.format(biz_date=biz_date)
     cur = get_cur(conn)
     cur.execute(sel_query)
     rows = list(cur)
@@ -70,6 +78,32 @@ def get_stock_list(conn,biz_date):
         stocks.append(row['id'])
     return stocks
 
+def downloader(queue, conn, start_date=options.start_date, end_date=options.end_date, stock_id=options.stock_id):
+    #-- object list
+    stock_objects = ['Tengxun_stock_transaction', 'Netease_stock_transaction', 'Sina_stock_transaction']
+    iter = 3
+    
+    cur_date_dt = datetime.datetime.strptime(options.start_date,'%Y%m%d')
+    end_date_dt = datetime.datetime.strptime(options.end_date,'%Y%m%d')
+    while cur_date_dt <= end_date_dt:  
+        #-- stock list
+        stocks = get_stock_list(conn, cur_date_dt, stock_id)
+        
+        for stock in stocks:
+            cur_date_str = cur_date_dt.strftime('%Y%m%d')
+            cur_stock_object = stock_objects[iter%len(stock_objects)] # choose stock object
+
+            while queue.full():
+                print_log('=================> queue is full, wait for 1 second...')
+                time.sleep(1)
+
+            s = Stock_trans_downloader(queue, conn, cur_stock_object, stock, cur_date_str)
+            s.start()
+            s.join()
+            print_log('-----> queue size: ' + queue.qsize())
+            iter += 1
+
+        cur_date_dt = cur_date_dt + datetime.timedelta(1)
 
     
 # check validation of mode and input file
@@ -92,34 +126,10 @@ if options.mode == 'download' or options.mode == 'downloadAndLoad':
     #-- create queue
     queue = Queue(qsize)
     
-    #-- object list
-    stock_objects = ['Tengxun_stock_transaction', 'Netease_stock_transaction', 'Sina_stock_transaction']
-    iter = 3
-    
-    cur_date_dt = datetime.datetime.strptime(options.start_date,'%Y%m%d')
-    end_date_dt = datetime.datetime.strptime(options.end_date,'%Y%m%d')
-    while cur_date_dt <= end_date_dt:  
-        #-- stock list
-        if not options.stock_id is None:
-            stocks = [options.stock_id]
-        else:
-            stocks = get_stock_list(conn, cur_date_dt)
-        
-        for stock in stocks:
-            cur_date_str = cur_date_dt.strftime('%Y%m%d')
-            cur_stock_object = stock_objects[iter%len(stock_objects)] # choose stock object
-            #print stock, cur_date_str, cur_stock_object, iter
-
-            while queue.full():
-                print_log('-------> queue is full, wait for 1 second...')
-                time.sleep(1)
-
-            s = Stock_trans_downloader(queue, conn, cur_stock_object, stock, cur_date_str)
-            s.start()
-            s.join()
-            iter += 1
-
-        cur_date_dt = cur_date_dt + datetime.timedelta(1)
+    #-- run 3 times
+    for i in ['1st', '2nd', '3rd']:
+        print_log('downloader running for the {n} time...'.format(n=i))
+        downloader(queue, conn)
 
 #-- load stock info into database
 if options.mode == 'load' or options.mode == 'downloadAndLoad':
