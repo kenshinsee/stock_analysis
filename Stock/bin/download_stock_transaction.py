@@ -29,7 +29,7 @@ LOG_DIR = Sys_paths.LOG_DIR
 DB_YML = YML_DIR + SEP + "db.yml"
 STOCK_YML = YML_DIR + SEP + "table" + SEP + "dw.stock_transaction.yml"
 now = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-qsize = 3
+QUEUE_MAX_SIZE = 3
 
 #-- fetch DB info
 db_dict = get_yaml(DB_YML)
@@ -81,30 +81,59 @@ def get_stock_list(conn, biz_date, stock_id):
 def downloader(queue, conn, start_date=options.start_date, end_date=options.end_date, stock_id=options.stock_id):
     #-- object list
     stock_objects = ['Tengxun_stock_transaction', 'Netease_stock_transaction', 'Sina_stock_transaction']
-    iter = 3
+    iter = len(stock_objects)
     
     cur_date_dt = datetime.datetime.strptime(options.start_date,'%Y%m%d')
     end_date_dt = datetime.datetime.strptime(options.end_date,'%Y%m%d')
     while cur_date_dt <= end_date_dt:  
         #-- stock list
         stocks = get_stock_list(conn, cur_date_dt, stock_id)
-        
         for stock in stocks:
             cur_date_str = cur_date_dt.strftime('%Y%m%d')
             cur_stock_object = stock_objects[iter%len(stock_objects)] # choose stock object
-
             while queue.full():
                 print_log('=================> queue is full, wait for 1 second...')
                 time.sleep(1)
-
             s = Stock_trans_downloader(queue, conn, cur_stock_object, stock, cur_date_str)
             s.start()
-            s.join()
-            print_log('-----> queue size: ' + queue.qsize())
+            #s.join()
+            print_log('-----> queue size: ' + str(queue.qsize()))
             iter += 1
-
         cur_date_dt = cur_date_dt + datetime.timedelta(1)
+        
+    while not queue.empty():
+        print_log('=================> queue is not empty yet, wait for 1 second...')
+        time.sleep(1)
 
+        
+def download_log_checker(conn, start_date=options.start_date, end_date=options.end_date):
+    start_date_dt = datetime.datetime.strptime(options.start_date,'%Y%m%d')
+    end_date_dt = datetime.datetime.strptime(options.end_date,'%Y%m%d')
+    
+    # get stock ids which is_download_success=N
+    chk_sql = '''
+    select t.biz_date, 
+      t.stock_id
+    from (
+    select 
+      biz_date, 
+      stock_id, 
+      is_download_success, 
+      row_number() over(partition by biz_date, stock_id order by download_end_time desc) rankid
+    from dw.log_stock_transaction
+    where biz_date between '{start_date}' and '{end_date}' 
+    ) t where t.rankid = 1
+    and t.is_download_success = 'N' '''.format(start_date=start_date_dt, end_date=end_date_dt)
+    
+    cur = get_cur(conn)
+    cur.execute(chk_sql)
+    rows = list(cur)
+    if len(rows) == 0:
+        print_log('All the stocks have been downloaded successfully.')
+    else:
+        for row in rows:
+            error_log(str(row['biz_date']) + ':' + row['stock_id'] + ' downloaded failed.')
+    return len(rows)
     
 # check validation of mode and input file
 if not (options.mode in ['download', 'load', 'downloadAndLoad']):
@@ -124,13 +153,22 @@ elif options.start_date > options.end_date:
 #-- download stock info from internet
 if options.mode == 'download' or options.mode == 'downloadAndLoad':
     #-- create queue
-    queue = Queue(qsize)
+    queue = Queue(QUEUE_MAX_SIZE)
     
-    #-- run 3 times
+    #-- run 3 times, just in case some stocks failed to download
     for i in ['1st', '2nd', '3rd']:
-        print_log('downloader running for the {n} time...'.format(n=i))
+        print_log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+        print_log('downloader running for the {n} time...' . format(n=i))
+        print_log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
         downloader(queue, conn)
+        error_num = download_log_checker(conn)
+        if error_num == 0: break
 
+    #-- retry 3 times, still failed, raise runtime error
+    if error_num > 0: raise RuntimeError('There are {num} stocks failed to download, please check.' . format(num=error_num))
+    
+    #queue.task_done()
+    
 #-- load stock info into database
 if options.mode == 'load' or options.mode == 'downloadAndLoad':
     pass
