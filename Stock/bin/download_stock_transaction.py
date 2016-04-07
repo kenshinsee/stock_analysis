@@ -41,7 +41,6 @@ recent_working_day = recent_working_day(is_skip_holiday=True, conn=conn)
 #-- opts
 parser = OptionParser()
 parser.add_option("--mode", "-m", dest="mode", action="store", default='download', help="download|load|downloadAndLoad")
-parser.add_option("--file", "-f", dest="file", action="store", help="--file|-f is required for load mode")
 parser.add_option("--start_date", "-s", dest="start_date", action="store", default=recent_working_day, help="The default value is " + recent_working_day + ", the format is YYYYMMDD")
 parser.add_option("--end_date", "-e", dest="end_date", action="store", default=recent_working_day, help="The default value is " + recent_working_day + ", the format is YYYYMMDD")
 parser.add_option("--stock_id", "-i", dest="stock_id", action="store", help="--stock_id|-i is optional")
@@ -83,8 +82,8 @@ def downloader(queue, conn, start_date=options.start_date, end_date=options.end_
     stock_objects = ['Tengxun_stock_transaction', 'Netease_stock_transaction', 'Sina_stock_transaction']
     iter = len(stock_objects)
     
-    cur_date_dt = datetime.datetime.strptime(options.start_date,'%Y%m%d')
-    end_date_dt = datetime.datetime.strptime(options.end_date,'%Y%m%d')
+    cur_date_dt = datetime.datetime.strptime(start_date,'%Y%m%d')
+    end_date_dt = datetime.datetime.strptime(end_date,'%Y%m%d')
     while cur_date_dt <= end_date_dt:  
         #-- stock list
         stocks = get_stock_list(conn, cur_date_dt, stock_id)
@@ -107,8 +106,8 @@ def downloader(queue, conn, start_date=options.start_date, end_date=options.end_
 
         
 def download_log_checker(conn, start_date=options.start_date, end_date=options.end_date):
-    start_date_dt = datetime.datetime.strptime(options.start_date,'%Y%m%d')
-    end_date_dt = datetime.datetime.strptime(options.end_date,'%Y%m%d')
+    start_date_dt = datetime.datetime.strptime(start_date,'%Y%m%d')
+    end_date_dt = datetime.datetime.strptime(end_date,'%Y%m%d')
     
     # get stock ids which is_download_success=N
     chk_sql = '''
@@ -132,16 +131,83 @@ def download_log_checker(conn, start_date=options.start_date, end_date=options.e
         print_log('All the stocks have been downloaded successfully.')
     else:
         for row in rows:
-            error_log(str(row['biz_date']) + ':' + row['stock_id'] + ' downloaded failed.')
+            error_log(str(row['biz_date']) + ':' + row['stock_id'] + ' failed to download.')
     return len(rows)
+
     
-# check validation of mode and input file
+def row_checker(row):
+    #300244  20160407        09:25:02        59.25   59.25   193     1144947 买盘
+    if len(row.split('\t')) == 8:
+        return True
+    else:
+        return False
+
+def insert_into_stock_trans(conn, row):
+    if not row_checker(row):
+        error_log('Row format is incorrect [{row}]'.format(row=row))
+
+    
+def loader(conn, start_date=options.start_date, end_date=options.end_date, stock_id=options.stock_id):
+    cur_date_dt = datetime.datetime.strptime(start_date,'%Y%m%d')
+    end_date_dt = datetime.datetime.strptime(end_date,'%Y%m%d')
+    file_suffix = '.txt'
+    
+    stock_list_sql = '''
+    select row_id, biz_date, stock_id
+    from dw.log_stock_transaction
+    where biz_date = '{biz_date}'
+    and is_download_success = 'Y'
+    and (is_load_success = 'N' or is_load_success is null)
+    '''
+    if not stock_id is None: stock_list_sql = stock_list_sql + ' and stock_id = \'' + stock_id + '\''
+    
+    log_start_upd_sql = '''
+    update dw.log_stock_transaction
+    set load_start_time = '{start_time}'
+    where row_id = {row_id}
+    '''
+    log_end_upd_sql = '''
+    update dw.log_stock_transaction
+    set load_end_time = '{end_time}', is_load_success = '{status}'
+    where row_id = {row_id}
+    '''
+    del_sql = '''delete from dw.stock_transaction where biz_date = '{biz_date}' and stock_id = '{stock_id}' '''
+    
+    cur = get_cur(conn)
+    while cur_date_dt <= end_date_dt:  
+        stock_list_sql_var_replaced = stock_list_sql.format(biz_date=cur_date_dt)
+        cur.execute(stock_list_sql_var_replaced)
+        rows = list(cur)
+        for row in rows:
+            row_id = row['row_id']
+            biz_date = row['biz_date']
+            stock_id = row['stock_id']
+            
+            file_full_name = data_dir + SEP + str(biz_date).replace('-','') + SEP + stock_id + file_suffix
+            if not os.path.exists(file_full_name):
+                error_log(file_full_name + ' doesn\'t exist.')
+                continue
+            
+            log_start_upd_sql_var_replaced = log_start_upd_sql.format(start_time=time.ctime(), row_id=row_id)
+            cur.execute(log_start_upd_sql_var_replaced)
+            
+            del_sql_var_replaced = del_sql.format(biz_date=biz_date, stock_id=stock_id) # delete existing records for the day
+            cur.execute(log_start_upd_sql_var_replaced)
+
+            with open(file_full_name) as file:
+                for row in file:
+                    insert_into_stock_trans(conn, row)
+                conn.commit()
+                
+        cur_date_dt = cur_date_dt + datetime.timedelta(1)
+
+        
+        
+        
+# check validation of mode
 if not (options.mode in ['download', 'load', 'downloadAndLoad']):
     exit_error(mode + ' is not recognized, it could be download|load|downloadAndLoad.')
-elif options.mode == 'load' and options.file is None:
-    exit_error('--file|-f is required when in load mode.')
-elif options.mode == 'load' and not options.file is None and not os.path.exists(options.file):
-    exit_error(options.file + ' doesn\'t exist.')
+
     
 # check validation of start_date and end_date
 if not (re.match("^\d{8}$", options.start_date) and re.match("^\d{8}$", options.end_date)):
@@ -171,7 +237,7 @@ if options.mode == 'download' or options.mode == 'downloadAndLoad':
     
 #-- load stock info into database
 if options.mode == 'load' or options.mode == 'downloadAndLoad':
-    pass
+    loader(conn, stock_id = options.stock_id)
 
 
 #-- close connection
