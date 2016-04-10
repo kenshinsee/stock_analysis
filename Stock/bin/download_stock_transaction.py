@@ -13,10 +13,8 @@ from Sys_paths import Sys_paths
 from tooling.psql import get_conn, get_cur
 from tooling.db_func import insert_into_table
 from downloader.Stock_trans_downloader import Stock_trans_downloader
+from loader.Stock_trans_loader import Stock_trans_loader
 
-#from object_impl.Tengxun_stock_transaction import Tengxun_stock_transaction
-#from object_impl.Netease_stock_transaction import Netease_stock_transaction
-#from object_impl.Sina_stock_transaction import Sina_stock_transaction
 
 #-- sys var
 SEP = os.path.sep
@@ -29,7 +27,8 @@ LOG_DIR = Sys_paths.LOG_DIR
 DB_YML = YML_DIR + SEP + "db.yml"
 STOCK_YML = YML_DIR + SEP + "table" + SEP + "dw.stock_transaction.yml"
 now = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-QUEUE_MAX_SIZE = 3
+QUEUE_DOWNLOAD_MAX_SIZE = 3
+QUEUE_LOAD_MAX_SIZE = 5
 
 #-- fetch DB info
 db_dict = get_yaml(DB_YML)
@@ -134,23 +133,12 @@ def download_log_checker(conn, start_date=options.start_date, end_date=options.e
             error_log(str(row['biz_date']) + ':' + row['stock_id'] + ' failed to download.')
     return len(rows)
 
-    
-def row_checker(row):
-    #300244  20160407        09:25:02        59.25   59.25   193     1144947 买盘
-    if len(row.split('\t')) == 8:
-        return True
-    else:
-        return False
-
-def insert_into_stock_trans(conn, row):
-    if not row_checker(row):
-        error_log('Row format is incorrect [{row}]'.format(row=row))
+###########################################################################
 
     
-def loader(conn, start_date=options.start_date, end_date=options.end_date, stock_id=options.stock_id):
+def loader(queue, conn, start_date=options.start_date, end_date=options.end_date, stock_id=options.stock_id):
     cur_date_dt = datetime.datetime.strptime(start_date,'%Y%m%d')
     end_date_dt = datetime.datetime.strptime(end_date,'%Y%m%d')
-    file_suffix = '.txt'
     
     stock_list_sql = '''
     select row_id, biz_date, stock_id
@@ -161,18 +149,6 @@ def loader(conn, start_date=options.start_date, end_date=options.end_date, stock
     '''
     if not stock_id is None: stock_list_sql = stock_list_sql + ' and stock_id = \'' + stock_id + '\''
     
-    log_start_upd_sql = '''
-    update dw.log_stock_transaction
-    set load_start_time = '{start_time}'
-    where row_id = {row_id}
-    '''
-    log_end_upd_sql = '''
-    update dw.log_stock_transaction
-    set load_end_time = '{end_time}', is_load_success = '{status}'
-    where row_id = {row_id}
-    '''
-    del_sql = '''delete from dw.stock_transaction where biz_date = '{biz_date}' and stock_id = '{stock_id}' '''
-    
     cur = get_cur(conn)
     while cur_date_dt <= end_date_dt:  
         stock_list_sql_var_replaced = stock_list_sql.format(biz_date=cur_date_dt)
@@ -180,34 +156,26 @@ def loader(conn, start_date=options.start_date, end_date=options.end_date, stock
         rows = list(cur)
         for row in rows:
             row_id = row['row_id']
-            biz_date = row['biz_date']
+            biz_date = str(row['biz_date']).replace('-','')
             stock_id = row['stock_id']
-            
-            file_full_name = data_dir + SEP + str(biz_date).replace('-','') + SEP + stock_id + file_suffix
-            if not os.path.exists(file_full_name):
-                error_log(file_full_name + ' doesn\'t exist.')
-                continue
-            
-            log_start_upd_sql_var_replaced = log_start_upd_sql.format(start_time=time.ctime(), row_id=row_id)
-            cur.execute(log_start_upd_sql_var_replaced)
-            
-            del_sql_var_replaced = del_sql.format(biz_date=biz_date, stock_id=stock_id) # delete existing records for the day
-            cur.execute(log_start_upd_sql_var_replaced)
-
-            with open(file_full_name) as file:
-                for row in file:
-                    insert_into_stock_trans(conn, row)
-                conn.commit()
+            while queue.full():
+                print_log('=================> queue is full, wait for 1 second...')
+                time.sleep(1)
+            s = Stock_trans_loader(queue, conn, row_id, stock_id, biz_date)
+            s.start()
+            print_log('-----> queue size: ' + str(queue.qsize()))
+            conn.commit()
                 
         cur_date_dt = cur_date_dt + datetime.timedelta(1)
 
-        
+    while not queue.empty():
+        print_log('=================> queue is not empty yet, wait for 1 second...')
+        time.sleep(1)
         
         
 # check validation of mode
 if not (options.mode in ['download', 'load', 'downloadAndLoad']):
     exit_error(mode + ' is not recognized, it could be download|load|downloadAndLoad.')
-
     
 # check validation of start_date and end_date
 if not (re.match("^\d{8}$", options.start_date) and re.match("^\d{8}$", options.end_date)):
@@ -215,13 +183,12 @@ if not (re.match("^\d{8}$", options.start_date) and re.match("^\d{8}$", options.
 elif options.start_date > options.end_date:
     exit_error("Start date is greater then end date! [" + options.start_date + "][" + options.end_date + "]")
 
+#-- create queue
+queue = Queue(QUEUE_DOWNLOAD_MAX_SIZE)
 
 #-- download stock info from internet
 if options.mode == 'download' or options.mode == 'downloadAndLoad':
-    #-- create queue
-    queue = Queue(QUEUE_MAX_SIZE)
-    
-    #-- run 3 times, just in case some stocks failed to download
+    #-- at most run 3 times, just in case some stocks failed to download
     for i in ['1st', '2nd', '3rd']:
         print_log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
         print_log('downloader running for the {n} time...' . format(n=i))
@@ -229,15 +196,20 @@ if options.mode == 'download' or options.mode == 'downloadAndLoad':
         downloader(queue, conn)
         error_num = download_log_checker(conn)
         if error_num == 0: break
-
     #-- retry 3 times, still failed, raise runtime error
     if error_num > 0: raise RuntimeError('There are {num} stocks failed to download, please check.' . format(num=error_num))
-    
     #queue.task_done()
-    
+
+#-- upsize queue size to speed up data loading 
+queue = Queue(QUEUE_LOAD_MAX_SIZE)
 #-- load stock info into database
 if options.mode == 'load' or options.mode == 'downloadAndLoad':
-    loader(conn, stock_id = options.stock_id)
+    #-- at most run 3 times, just in case some stocks failed to download
+    for i in ['1st', '2nd', '3rd']:
+        print_log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+        print_log('loader running for the {n} time...' . format(n=i))
+        print_log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+        loader(queue, conn)
 
 
 #-- close connection

@@ -15,9 +15,9 @@ class Netease_stock_transaction:
     __url_prefix = "http://quotes.money.163.com/cjmx"
     __code_symbol = "/%(year)s/%(date)s/%(code_loc)s%(code)s.xls"
     __code_loc_dict = {
-        "60": "0", 
-        "00": "1", 
-        "30": "1", 
+        "60": "0",
+        "00": "1",
+        "30": "1",
         "51": "0",
         "15": "1",
         "20": "1",
@@ -97,13 +97,14 @@ class Netease_stock_transaction:
         
         
 if __name__ == "__main__":
-    s = Netease_stock_transaction("300499", "20160325")
+    obj = Netease_stock_transaction.get_stock_object_from_str('300244\t20160407\t09:25:02\t59.25\t59.25\t193\t1144947\t买盘')
+
+    #s = Netease_stock_transaction("300499", "20160407")
     #s.download_to_local()
     #c = s.get_stock_content()
-    #print c['300499']['20160325']
-    obj = s.get_stock_object()#['300499']['20160318']
+    #obj = s.get_stock_object()#['300499']['20160407']
     for code in obj:
         for date in obj[code]:
-            print code, date, obj[code][date].attrs_in_dict[1]['buy_sell']
+            print code, date, obj[code][date].attrs_in_dict[0]['buy_sell'].decode('utf-8')
             
         

@@ -1,62 +1,53 @@
 stock_id: 
   type: varchar
-  is_pk: Y
   stock_object: 
     Xueqiu_stock: code
     Neteast_stock: code
     
 date: 
   type: varchar
-  is_pk: Y
   stock_object:
     Xueqiu_stock: date
     Neteast_stock: date
 
 time: 
   type: varchar
-  is_pk: N
   stock_object:
     Xueqiu_stock: time
     Neteast_stock: time
     
 trans_price: 
   type: number
-  is_pk: N
   stock_object:
     Xueqiu_stock: trans_price
     Neteast_stock: trans_price
 
 price_change: 
   type: number
-  is_pk: N
   stock_object:
     Xueqiu_stock: price_change
     Neteast_stock: price_change
     
 volume: 
   type: number
-  is_pk: N
   stock_object:
     Xueqiu_stock: volume
     Neteast_stock: volume
     
 amount: 
   type: number
-  is_pk: N
   stock_object:
     Xueqiu_stock: amount
     Neteast_stock: amount
     
 buy_sell: 
   type: number
-  is_pk: N
   stock_object:
     Xueqiu_stock: buy_sell
     Neteast_stock: buy_sell
     
 source:
   type: varchar
-  is_pk: N
   stock_object: 
     Xueqiu_stock: source
     Neteast_stock: source
