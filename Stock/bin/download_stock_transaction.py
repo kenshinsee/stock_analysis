@@ -28,7 +28,7 @@ DB_YML = YML_DIR + SEP + "db.yml"
 STOCK_YML = YML_DIR + SEP + "table" + SEP + "dw.stock_transaction.yml"
 now = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 QUEUE_DOWNLOAD_MAX_SIZE = 3
-QUEUE_LOAD_MAX_SIZE = 5
+QUEUE_LOAD_MAX_SIZE = 6
 
 #-- fetch DB info
 db_dict = get_yaml(DB_YML)
@@ -133,8 +133,6 @@ def download_log_checker(conn, start_date=options.start_date, end_date=options.e
             error_log(str(row['biz_date']) + ':' + row['stock_id'] + ' failed to download.')
     return len(rows)
 
-###########################################################################
-
     
 def loader(queue, conn, start_date=options.start_date, end_date=options.end_date, stock_id=options.stock_id):
     cur_date_dt = datetime.datetime.strptime(start_date,'%Y%m%d')
@@ -185,7 +183,6 @@ elif options.start_date > options.end_date:
 
 #-- create queue
 queue = Queue(QUEUE_DOWNLOAD_MAX_SIZE)
-
 #-- download stock info from internet
 if options.mode == 'download' or options.mode == 'downloadAndLoad':
     #-- at most run 3 times, just in case some stocks failed to download

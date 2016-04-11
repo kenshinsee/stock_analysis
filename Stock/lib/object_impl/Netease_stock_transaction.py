@@ -55,7 +55,7 @@ class Netease_stock_transaction:
         out_content = ''
         for row_idx in range(sheet.nrows):
             if row_idx == 0: continue
-            out_content = out_content + self.__code + '\t' + self.__date + '\t' + sheet.cell(row_idx,0).value + '\t' + str(sheet.cell(row_idx,1).value) + '\t' + str(sheet.cell(row_idx,2).value) + '\t' + str(sheet.cell(row_idx,3).value) + '\t' + str(sheet.cell(row_idx,4).value) + '\t' + sheet.cell(row_idx,5).value + '\n'
+            out_content = out_content + self.__code + '\t' + self.__date + '\t' + sheet.cell(row_idx,0).value + '\t' + str(sheet.cell(row_idx,1).value) + '\t' + str(sheet.cell(row_idx,2).value) + '\t' + str(sheet.cell(row_idx,3).value) + '\t' + str(sheet.cell(row_idx,4).value) + '\t' + sheet.cell(row_idx,5).value + '\t' + 'Netease' + '\n'
         out_dict = {}
         out_dict[self.__code] = {}
         out_dict[self.__code][self.__date] = out_content.encode('gb2312')
@@ -99,12 +99,11 @@ class Netease_stock_transaction:
 if __name__ == "__main__":
     obj = Netease_stock_transaction.get_stock_object_from_str('300244\t20160407\t09:25:02\t59.25\t59.25\t193\t1144947\t买盘')
 
-    #s = Netease_stock_transaction("300499", "20160407")
-    #s.download_to_local()
-    #c = s.get_stock_content()
-    #obj = s.get_stock_object()#['300499']['20160407']
+    s = Netease_stock_transaction("300499", "20160407")
+    s.download_to_local()
+    obj = s.get_stock_content()
     for code in obj:
         for date in obj[code]:
-            print code, date, obj[code][date].attrs_in_dict[0]['buy_sell'].decode('utf-8')
+            print obj[code][date]
             
         

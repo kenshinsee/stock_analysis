@@ -58,7 +58,7 @@ class Tengxun_stock_transaction:
             for row in f.readlines():
                 row_idx += 1
                 if row_idx == 1: continue
-                row_add_stock_id_date =str(self.__code) + '\t' + self.__date + '\t' + row #+ '\n'
+                row_add_stock_id_date =str(self.__code) + '\t' + self.__date + '\t' + row.strip() + '\t' + 'Tengxun' + '\n'
                 out_content = out_content + row_add_stock_id_date
         out_dict[self.__code][self.__date] = out_content
         return out_dict
@@ -99,14 +99,14 @@ class Tengxun_stock_transaction:
         
         
 if __name__ == "__main__":
-    s = Tengxun_stock_transaction("300499", "20160325")#Tengxun_stock_transaction("300499", "20160317")
+    s = Tengxun_stock_transaction("300499", "20160411")#Tengxun_stock_transaction("300499", "20160317")
     #s.download_to_local()
     #c = s.get_stock_content()
     #print c['300499']['20160325']
+    s.download_to_local()
 
-    obj = s.get_stock_object()#['300499']['20160317']
+    obj = s.get_stock_content()#['300499']['20160317']
     for code in obj:
         for date in obj[code]:
-            print code, date, obj[code][date].attrs_in_dict[1]['buy_sell']
+            print obj[code][date]
             
-        

@@ -64,8 +64,12 @@ class Sina_stock_transaction:
         with open(self.__download_file) as f:
             for row in f.readlines():
                 row_idx += 1
-                if row_idx == 1: continue
-                row_add_stock_id_date =str(self.__code) + '\t' + self.__date + '\t' + row #+ '\n'
+                if row_idx == 1: 
+                    if len(row.split('\t')) == 1: # no data return
+                        break
+                    else:
+                        continue
+                row_add_stock_id_date =str(self.__code) + '\t' + self.__date + '\t' + row.strip() + '\t' + 'Sina' + '\n'
                 out_content = out_content + row_add_stock_id_date.replace('--', '0.00')
         out_dict[self.__code][self.__date] = out_content # gb2312
         return out_dict
@@ -106,12 +110,12 @@ class Sina_stock_transaction:
         
         
 if __name__ == "__main__":
-    s = Sina_stock_transaction("000005", "20160401")
+    s = Sina_stock_transaction("000612", "20160411")
     s.download_to_local()
 
-    obj = s.get_stock_object()#['300499']['20160317']
+    obj = s.get_stock_content()#['300499']['20160317']
     for code in obj:
         for date in obj[code]:
-            print code, date, obj[code][date].attrs_in_dict[1]['buy_sell']
+            print obj[code][date]
             
         

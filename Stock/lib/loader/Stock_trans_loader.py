@@ -17,7 +17,7 @@ SEP = Sys_paths.SEP
 DB_YML = Sys_paths.YML_DIR + SEP + "db.yml"
 DATA_DIR = Sys_paths.DATA_STOCK_TRANSACTION
 TABLE = 'dw.stock_transaction'
-COLS = 'stock_id,biz_date,time,trans_price,price_change,volume,amount,buy_sell'
+COLS = 'stock_id,biz_date,time,trans_price,price_change,volume,amount,buy_sell,source'
 
 class Stock_trans_loader(threading.Thread):
     def __init__(self, queue, conn, log_row_id, stock_id, date, file=None):
