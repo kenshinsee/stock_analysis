@@ -1,4 +1,4 @@
-#!/usr/local/bin/python2.7
+#!/usr/bin/python2.7
 #coding:utf-8
 # This script is used to download transaction data to flat file and load data from flat file to db
 
