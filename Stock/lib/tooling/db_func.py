@@ -22,6 +22,10 @@ def insert_into_table(db_field_yaml, stock_obj_name, in_file, conn, log_fh, warn
     #   is_pk: Y
     #   stock_object: 
     #         Tengxun_stock: date
+    from object_impl.Sina_stock import Sina_stock
+    from object_impl.Tengxun_stock import Tengxun_stock
+    from object_impl.Yahoo_stock import Yahoo_stock
+    
     db_field_mapping = get_yaml(db_field_yaml)
     tab_name = os.path.basename(db_field_yaml).replace('.yml', '') # yml file name as table name
     tab_fields = [] # table field names
@@ -46,7 +50,7 @@ def insert_into_table(db_field_yaml, stock_obj_name, in_file, conn, log_fh, warn
             # this function accepts the string returned from website and generate a dict for stock object
             # the dict is like {stock: {date: object}}
             # dynamically import object module, class name and file name should be identical
-            exec('from object_impl.{object} import {object}'.format(object = stock_obj_name), globals())
+            #exec('from object_impl.{object} import {object}'.format(object = stock_obj_name), globals())
             stock_dict = eval('{object}.get_stock_object_from_str(row)'.format(object=stock_obj_name, row=row))
             for stock in stock_dict: # for Tengxun or sina interface, there is just one stock in one stock dict
                 for date in stock_dict[stock]: # for Tengxun or sina interface, there is just one date in one stock dict

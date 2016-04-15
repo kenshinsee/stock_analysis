@@ -25,7 +25,7 @@ import re,sys,pprint,copy,csv,os
 reload(sys)
 sys.setdefaultencoding("gbk")
 from tooling.common_tool import print_log, read_url, get_date, return_new_name_for_existing_file
-
+from Sys_paths import Sys_paths
 
 class Eastmoney:
 
@@ -279,10 +279,8 @@ if __name__ == "__main__":
     today = get_date('today')
     
     bkbkfile_name = 'bankuai_' + today + '.csv'
-    return_list = e.export_bankuai_status('D:\\workspace\\Stock\\data\\stock_bankuai_daily\\' + bkbkfile_name)
-    #return_list = e.export_bankuai_status('/app/dw/script/python/' + bkbkfile_name)
+    return_list = e.export_bankuai_status( Sys_paths.DATA_STOCK_BANKUAI_DAILY + Sys_paths.SEP + bkbkfile_name)
 	
     bkstfile_name = 'bankuai_stock_' + today + '.csv'
-    return_dict = e.export_bankuai_stock('D:\\workspace\\Stock\\data\\stock_bankuai_daily\\' + bkstfile_name)
-    #return_dict = e.export_bankuai_stock('/app/dw/script/python/' + bkstfile_name)
+    return_dict = e.export_bankuai_stock( Sys_paths.DATA_STOCK_BANKUAI_DAILY + Sys_paths.SEP + bkstfile_name)
     
