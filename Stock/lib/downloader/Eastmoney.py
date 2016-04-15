@@ -1,4 +1,4 @@
-#!/usr/local/bin/python2.7
+#!/usr/bin/python2.7
 # coding:utf-8
 # This class is to grab data from www.eastmoney.com
 #
