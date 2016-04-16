@@ -11,6 +11,7 @@ from loader.load_into_dim_bankuai import load_into_dim_bankuai
 from loader.load_into_dim_stock import load_into_dim_stock
 from loader.load_into_dim_stock_bankuai import load_into_dim_stock_bankuai
 from loader.load_into_bankuai import load_into_bankuai
+from downloader.Eastmoney import Eastmoney
 
 #-- sys var
 SEP = os.path.sep
@@ -66,6 +67,7 @@ files_to_load = {}
 
 #-- opts
 parser = OptionParser()
+parser.add_option("--mode", "-m", dest="mode", action="store", type="string", default="downloadAndLoad", help="download:Just download data from internet|load:load downloaded data into db|downloadAndLoad:do download and load in order")
 parser.add_option("--start_date", "-s", dest="start_date", action="store", type="string", default=recent_working_day, help="Start date of the date range, e.g. 20150101")
 parser.add_option("--end_date", "-e", dest="end_date", action="store", type="string", default=recent_working_day, help="End date of the date range, e.g. 20150101")
 parser.add_option("--table", "-t", dest="table", action="store", type="string", help="dim_bankuai|dim_stock|dim_stock_bankuai|bankuai")
@@ -78,6 +80,10 @@ start_date = options.start_date
 end_date = options.end_date
 
 #-- function
+def exit_error(msg):
+    error_log(msg)
+    sys.exit()
+    
 def exit_process():
 	os.system("python " + FILE_NAME + " -h")
 	sys.exit()
@@ -103,6 +109,9 @@ def return_parent_bankuai_ids(db_conn):
 [exit_for_none_var(var) for var in vars_for_none_check]
 
 #-- verify param
+if not options.mode in ('download', 'load', 'downloadAndLoad'):
+    exit_error(mode + ' is not recognized, it could be download|load|downloadAndLoad.')
+
 if not (re.match("^\d{8}$", start_date) and re.match("^\d{8}$", end_date)):
 	error_log("start_date or end_date error! [" + start_date + "][" + end_date + "]")
 	exit_process()
@@ -110,50 +119,59 @@ elif start_date > end_date:
 	error_log("start_date must be smaller than end_date! [" + start_date + "][" + end_date + "]")
 	exit_process()
 
-#-- determine file to load, $DATE is not replaced
-if options.in_file is None:
-	if options.table is None:
-		for tab in table_mapping:
-			files_to_load[tab] = table_mapping[tab]["file"]
-	elif options.table in table_mapping:
-		files_to_load = {options.table: table_mapping[options.table]["file"]}
-	else: 
-		error_log("table is not correct! [" + options.table + "]")
-		exit_process()
-else:
-	if options.table in table_mapping:
-		files_to_load = {options.table: [options.in_file]}
-	else:
-		error_log("table is not correct! [" + options.table + "]")
-		exit_process()
 
-#-- replace $DATE, it will check the existence of files, if file doesn't exist, it wouldn't be added to the loading list
-start_dt_dt = datetime.datetime.strptime(start_date, "%Y%m%d")
-end_dt_dt = datetime.datetime.strptime(end_date, "%Y%m%d")
-
-for k,v in files_to_load.items():
-	dt_replaced = []
-	process_dt_dt = start_dt_dt
-	while process_dt_dt <= end_dt_dt:
-		process_dt = datetime.datetime.strftime(process_dt_dt, "%Y%m%d")
-		if os.path.isfile(v[0].replace("$DATE", process_dt)):
-			dt_replaced.append(v[0].replace("$DATE", process_dt))
-		else:
-			warn_log(v[0].replace("$DATE", process_dt) + " doesn't exist." )
-		process_dt_dt = process_dt_dt + datetime.timedelta(1)
-	files_to_load[k] = dt_replaced
-
-
-#-- get the dict of parent bankuai id and name
-#parent_bankuai_ids = return_parent_bankuai_ids(conn)
-
+#------------------------------------------- Downloading
+if options.mode in ('download', 'downloadAndLoad'):
+    e = Eastmoney()
+    
+    bkbkfile_name = 'bankuai_' + recent_working_day + '.csv'
+    e.export_bankuai_status( Sys_paths.DATA_STOCK_BANKUAI_DAILY + Sys_paths.SEP + bkbkfile_name)
+	
+    bkstfile_name = 'bankuai_stock_' + recent_working_day + '.csv'
+    e.export_bankuai_stock( Sys_paths.DATA_STOCK_BANKUAI_DAILY + Sys_paths.SEP + bkstfile_name)
+    
 #------------------------------------------- LOADing
-for t in load_seq_tables:
-	if t in files_to_load:
-		for f in files_to_load[t]:
-			cmd = "%(func_name)s(%(param)s)" % {"func_name": table_mapping[t]["func_name"], "param": table_mapping[t]["param"]}
-			cmd_with_filename = cmd.replace("$f", f.replace('\\', '\\\\')) # replace \\ with \\\\ is just for windows platform, unix/linux platform won't be impacted
-			eval(cmd_with_filename)
+if options.mode in ('downloadAndLoad', 'load'):
+    #-- determine file to load, $DATE is not replaced
+    if options.in_file is None:
+        if options.table is None:
+            for tab in table_mapping:
+                files_to_load[tab] = table_mapping[tab]["file"]
+        elif options.table in table_mapping:
+            files_to_load = {options.table: table_mapping[options.table]["file"]}
+        else: 
+            error_log("table is not correct! [" + options.table + "]")
+            exit_process()
+    else:
+        if options.table in table_mapping:
+            files_to_load = {options.table: [options.in_file]}
+        else:
+            error_log("table is not correct! [" + options.table + "]")
+            exit_process()
+
+    #-- replace $DATE, it will check the existence of files, if file doesn't exist, it wouldn't be added to the loading list
+    start_dt_dt = datetime.datetime.strptime(start_date, "%Y%m%d")
+    end_dt_dt = datetime.datetime.strptime(end_date, "%Y%m%d")
+
+    for k,v in files_to_load.items():
+        dt_replaced = []
+        process_dt_dt = start_dt_dt
+        while process_dt_dt <= end_dt_dt:
+            process_dt = datetime.datetime.strftime(process_dt_dt, "%Y%m%d")
+            if os.path.isfile(v[0].replace("$DATE", process_dt)):
+                dt_replaced.append(v[0].replace("$DATE", process_dt))
+            else:
+                warn_log(v[0].replace("$DATE", process_dt) + " doesn't exist." )
+            process_dt_dt = process_dt_dt + datetime.timedelta(1)
+        files_to_load[k] = dt_replaced
+    
+    #-- Start to load
+    for t in load_seq_tables:
+        if t in files_to_load:
+            for f in files_to_load[t]:
+                cmd = "%(func_name)s(%(param)s)" % {"func_name": table_mapping[t]["func_name"], "param": table_mapping[t]["param"]}
+                cmd_with_filename = cmd.replace("$f", f.replace('\\', '\\\\')) # replace \\ with \\\\ is just for windows platform, unix/linux platform won't be impacted
+                eval(cmd_with_filename)
 
 conn.close()
 
