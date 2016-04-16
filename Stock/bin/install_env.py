@@ -107,7 +107,7 @@ if os.path.exists(sys_paths_file):
         os.remove(tmp_sys_paths_file)
     fh = open(sys_paths_file, 'r')
     data = fh.read()
-    new_data = re.sub(r'\s*PROJ_BASE_DIR = \'(?P<value>.+)\'',lambda m:'\n    PROJ_BASE_DIR = "' + m.group('value') + '"',data)
+    new_data = re.sub(r'\s*PROJ_BASE_DIR = \'(?P<value>.+)\'',lambda m:'\n    PROJ_BASE_DIR = "' + base_dir + '"',data)
     new_fh = open(tmp_sys_paths_file,'w')
     new_fh.write(new_data)
     fh.close()
@@ -115,7 +115,7 @@ if os.path.exists(sys_paths_file):
     
     os.remove(sys_paths_file)
     os.rename(tmp_sys_paths_file, sys_paths_file)
-    os.system('chgrp {who}:{who} {file}'.format(who=options.user, file=sys_paths_file))
+    os.system('chown {who}:{who} {file}'.format(who=options.user, file=sys_paths_file))
     os.system('chmod g+w {file}'.format(file=sys_paths_file))
     print sys_paths_file + ' was updated with new project base directory.'
 else:
