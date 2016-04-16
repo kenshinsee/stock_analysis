@@ -2,8 +2,7 @@ import sys,os
 
 class Sys_paths:
     SEP = os.path.sep
-    #PROJ_BASE_DIR = sys.path[0] + SEP + ".."
-    PROJ_BASE_DIR = 'D:/workspace/Stock'
+    PROJ_BASE_DIR = "D:/workspace/Stock"
     YML_DIR = PROJ_BASE_DIR + SEP + "etc"
     DATA_DIR = PROJ_BASE_DIR + SEP + "data"
     LOG_DIR = PROJ_BASE_DIR + SEP + "log"

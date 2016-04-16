@@ -1,6 +1,6 @@
 #!/usr/bin/python2.7
 #coding:utf-8
-import os
+import os,re
 from optparse import OptionParser
 from distutils.sysconfig import get_python_lib
 
@@ -67,7 +67,7 @@ Stock
     --tooling
   --log  [***MANUALLY CREATE***]
 """
-
+# create the directories marked as MANUALLY CREATE
 data_dir = {'data': ['stock_bankuai_daily','stock_daily','stock_transaction']}
 for k,v in data_dir.items():
     if not os.path.exists(base_dir + SEP + k):
@@ -97,3 +97,32 @@ else:
     print base_dir + SEP + log_dir + ' is already exists.'
     
     
+print "-------------------------------------"
+print "Update PROJ_BASE_DIR in Sys_paths.py"
+print "-------------------------------------"
+sys_paths_file = base_dir + SEP + 'lib' + SEP + 'Sys_paths.py'
+tmp_sys_paths_file = base_dir + SEP + 'lib' + SEP + 'Sys_paths.py.tmp'
+if os.path.exists(sys_paths_file):
+    if os.path.exists(tmp_sys_paths_file):
+        os.remove(tmp_sys_paths_file)
+    fh = open(sys_paths_file, 'r')
+    data = fh.read()
+    new_data = re.sub(r'\s*PROJ_BASE_DIR = \'(?P<value>.+)\'',lambda m:'\n    PROJ_BASE_DIR = "' + m.group('value') + '"',data)
+    new_fh = open(tmp_sys_paths_file,'w')
+    new_fh.write(new_data)
+    fh.close()
+    new_fh.close()
+    
+    os.remove(sys_paths_file)
+    os.rename(tmp_sys_paths_file, sys_paths_file)
+    os.system('chgrp {who}:{who} {file}'.format(who=options.user, file=sys_paths_file))
+    os.system('chmod g+w {file}'.format(file=sys_paths_file))
+    print sys_paths_file + ' was updated with new project base directory.'
+else:
+    raise RuntimeError(base_dir + SEP + 'lib' + SEP + 'Sys_paths.py doesn\'t not exist, please check.')
+
+    
+    
+    
+    
+

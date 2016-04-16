@@ -117,7 +117,7 @@ def download_log_checker(conn, start_date=options.start_date, end_date=options.e
       biz_date, 
       stock_id, 
       is_download_success, 
-      row_number() over(partition by biz_date, stock_id order by download_end_time desc) rankid
+      row_number() over(partition by biz_date, stock_id order by download_end_time desc nulls last) rankid
     from dw.log_stock_transaction
     where biz_date between '{start_date}' and '{end_date}' 
     ) t where t.rankid = 1
