@@ -107,7 +107,7 @@ if os.path.exists(sys_paths_file):
         os.remove(tmp_sys_paths_file)
     fh = open(sys_paths_file, 'r')
     data = fh.read()
-    new_data = re.sub(r'\s*PROJ_BASE_DIR = \'(?P<value>.+)\'',lambda m:'\n    PROJ_BASE_DIR = "' + base_dir + '"',data)
+    new_data = re.sub(r'\s*PROJ_BASE_DIR = "(?P<value>.+)"',lambda m:'\n    PROJ_BASE_DIR = "' + base_dir + '"',data)
     new_fh = open(tmp_sys_paths_file,'w')
     new_fh.write(new_data)
     fh.close()
