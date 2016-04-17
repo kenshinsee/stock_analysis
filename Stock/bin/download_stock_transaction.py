@@ -193,6 +193,8 @@ if options.mode == 'download' or options.mode == 'downloadAndLoad':
         downloader(queue, conn)
         error_num = download_log_checker(conn)
         if error_num == 0: break
+        print_log('=================> waiting for 10 seconds to start the next round run...')
+        time.sleep(10)
     #-- retry 3 times, still failed, raise runtime error
     if error_num > 0: raise RuntimeError('There are {num} stocks failed to download, please check.' . format(num=error_num))
     #queue.task_done()
@@ -207,6 +209,8 @@ if options.mode == 'load' or options.mode == 'downloadAndLoad':
         print_log('loader running for the {n} time...' . format(n=i))
         print_log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
         loader(queue, conn)
+        print_log('=================> waiting for 10 seconds to start the next round run...')
+        time.sleep(10)
 
 
 #-- close connection
