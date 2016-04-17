@@ -135,26 +135,12 @@ def inserter(conn, tabname, colnames, source_type, value, delimiter):
     conn.commit()
     print_log('Insertion for {0} is done.'.format(tabname))
     
+
+def psql_copy_from(dbname, table, file, args=' with (encoding \'GBK\')'):
+    cmd = 'psql -d {dbname} -c "\\copy {table} from \'{file}\' {args}"' . format(dbname=dbname, table=table, file=file, args=args)
+    os.system(cmd)
+
     
+if __name__ == '__main__':
 
-#from Sys_paths import Sys_paths
-##-- sys var
-#SEP = os.path.sep
-#FILE_PATH = sys.path[0]
-#FILE_BASE_NAME = __file__
-#FILE_NAME = FILE_PATH + SEP + FILE_BASE_NAME
-#data_dir = Sys_paths.DATA_STOCK_TRANSACTION
-#YML_DIR = Sys_paths.YML_DIR
-#LOG_DIR = Sys_paths.LOG_DIR
-#DB_YML = YML_DIR + SEP + "db.yml"
-#STOCK_YML = YML_DIR + SEP + "table" + SEP + "dw.stock_transaction.yml"
-#now = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-#
-##-- fetch DB info
-#db_dict = get_yaml(DB_YML)
-##-- open db connection
-#conn = get_conn(db_dict["DB"], db_dict["Username"], db_dict["Password"], db_dict["Host"], db_dict["Port"])
-#
-#inserter(conn, 'dw.stock_transaction', 'stock_id, biz_date, time, trans_price, price_change, volume, amount, buy_sell', 'file', 'D:\\workspace\\Stock\\data\\stock_transaction\\20160408\\002137.txt', '\t')
-
-
+    psql_copy_from('StockDb', 'dw.stock_transaction', '/app/workspace/Stock/data/stock_transaction/20160415/300400.txt')

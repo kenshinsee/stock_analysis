@@ -42,7 +42,6 @@ class Stock_trans_downloader(threading.Thread):
         ins_sql = '''insert into dw.log_stock_transaction ( row_id, biz_date, stock_id, download_start_time, download_source ) values ( {row_id}, '{date}', '{stock}', '{start_time}', '{stock_trans_obj_name}' )
         '''.format(row_id=self.row_id, date=self.date, stock=self.stock_id, start_time=time.ctime(), stock_trans_obj_name=self.stock_trans_obj_name)
         cur = get_cur(self.conn)
-        print ins_sql
         cur.execute(ins_sql)
         self.conn.commit()
         
@@ -52,7 +51,6 @@ class Stock_trans_downloader(threading.Thread):
         where row_id = {row_id}
         '''.format(row_id=self.row_id, end_time=time.ctime(), is_success='Y' if is_success else 'N')
         cur = get_cur(self.conn)
-        print ins_sql
         cur.execute(ins_sql)
         self.conn.commit()
 

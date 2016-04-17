@@ -11,7 +11,6 @@ from Queue import Queue
 from tooling.common_tool import replace_vars, print_log, error_log, warn_log, get_date, recent_working_day, get_yaml, return_new_name_for_existing_file
 from Sys_paths import Sys_paths
 from tooling.psql import get_conn, get_cur
-from tooling.db_func import insert_into_table
 from downloader.Stock_trans_downloader import Stock_trans_downloader
 from loader.Stock_trans_loader import Stock_trans_loader
 
@@ -28,7 +27,7 @@ DB_YML = YML_DIR + SEP + "db.yml"
 STOCK_YML = YML_DIR + SEP + "table" + SEP + "dw.stock_transaction.yml"
 now = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 QUEUE_DOWNLOAD_MAX_SIZE = 3
-QUEUE_LOAD_MAX_SIZE = 6
+QUEUE_LOAD_MAX_SIZE = 3
 
 #-- fetch DB info
 db_dict = get_yaml(DB_YML)
@@ -43,6 +42,7 @@ parser.add_option("--mode", "-m", dest="mode", action="store", default='download
 parser.add_option("--start_date", "-s", dest="start_date", action="store", default=recent_working_day, help="The default value is " + recent_working_day + ", the format is YYYYMMDD")
 parser.add_option("--end_date", "-e", dest="end_date", action="store", default=recent_working_day, help="The default value is " + recent_working_day + ", the format is YYYYMMDD")
 parser.add_option("--stock_id", "-i", dest="stock_id", action="store", help="--stock_id|-i is optional")
+parser.add_option("--enable_copy", "-c", dest="enable_copy", action="store_true", default=False, help="Enable postgres copy when loading data into table")
 (options, args) = parser.parse_args()
 
 #-- function
@@ -134,7 +134,7 @@ def download_log_checker(conn, start_date=options.start_date, end_date=options.e
     return len(rows)
 
     
-def loader(queue, conn, start_date=options.start_date, end_date=options.end_date, stock_id=options.stock_id):
+def loader(queue, conn, start_date=options.start_date, end_date=options.end_date, stock_id=options.stock_id, enable_copy=options.enable_copy):
     cur_date_dt = datetime.datetime.strptime(start_date,'%Y%m%d')
     end_date_dt = datetime.datetime.strptime(end_date,'%Y%m%d')
     
@@ -159,7 +159,7 @@ def loader(queue, conn, start_date=options.start_date, end_date=options.end_date
             while queue.full():
                 print_log('=================> queue is full, wait for 1 second...')
                 time.sleep(1)
-            s = Stock_trans_loader(queue, conn, row_id, stock_id, biz_date)
+            s = Stock_trans_loader(queue, conn, row_id, stock_id, biz_date, enable_copy=enable_copy)
             s.start()
             print_log('-----> queue size: ' + str(queue.qsize()))
             conn.commit()

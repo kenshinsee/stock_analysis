@@ -10,7 +10,7 @@ from Queue import Queue
 from Sys_paths import Sys_paths
 from tooling.psql import get_conn, get_cur
 from tooling.common_tool import replace_vars, print_log, error_log, warn_log, get_date, recent_working_day, get_yaml, return_new_name_for_existing_file
-from tooling.db_func import inserter, get_query_result
+from tooling.db_func import inserter, get_query_result, psql_copy_from
 
 #-- sys var
 SEP = Sys_paths.SEP
@@ -18,9 +18,10 @@ DB_YML = Sys_paths.YML_DIR + SEP + "db.yml"
 DATA_DIR = Sys_paths.DATA_STOCK_TRANSACTION
 TABLE = 'dw.stock_transaction'
 COLS = 'stock_id,biz_date,time,trans_price,price_change,volume,amount,buy_sell,source'
+DB_NAME = get_yaml(DB_YML)["DB"]
 
 class Stock_trans_loader(threading.Thread):
-    def __init__(self, queue, conn, log_row_id, stock_id, date, file=None):
+    def __init__(self, queue, conn, log_row_id, stock_id, date, file=None, enable_copy=False):
         threading.Thread.__init__(self, name=stock_id + '-' + date)
         self.queue = queue
         self.conn = conn
@@ -28,6 +29,7 @@ class Stock_trans_loader(threading.Thread):
         self.stock_id = stock_id
         self.date = date
         self.file = DATA_DIR + SEP + date + SEP + stock_id + '.txt' if file is None else file
+        self.enable_copy = enable_copy
         
     def check_row_id_existance(self):
         sel_sql = '''
@@ -67,7 +69,10 @@ class Stock_trans_loader(threading.Thread):
         self.log_load_start()
         self.delete_existing_records()
         try:
-            inserter(self.conn, TABLE, COLS, 'file', self.file, '\t')
+            if self.enable_copy:
+                psql_copy_from(DB_NAME, 'dw.stock_transaction', self.file, args=' with (encoding \'GBK\')')
+            else:
+                inserter(self.conn, TABLE, COLS, 'file', self.file, '\t')
             self.log_load_end(is_success=True)
         except:
             traceback.print_exc()
@@ -84,7 +89,7 @@ if __name__ == '__main__':
     #-- open db connection
     conn = get_conn(db_dict["DB"], db_dict["Username"], db_dict["Password"], db_dict["Host"], db_dict["Port"])
 
-    s = Stock_trans_loader(queue, conn, '57', '300250', "20160401")
+    s = Stock_trans_loader(queue, conn, '57', '300250', "20160401", enable_copy=True)
     s.start()
     s.join()
     
