@@ -38,7 +38,7 @@ recent_working_day = recent_working_day(is_skip_holiday=True, conn=conn)
 
 #-- opts
 parser = OptionParser()
-parser.add_option("--mode", "-m", dest="mode", action="store", default='download', help="download|load|downloadAndLoad")
+parser.add_option("--mode", "-m", dest="mode", action="store", default='downloadAndLoad', help="download|load|downloadAndLoad")
 parser.add_option("--start_date", "-s", dest="start_date", action="store", default=recent_working_day, help="The default value is " + recent_working_day + ", the format is YYYYMMDD")
 parser.add_option("--end_date", "-e", dest="end_date", action="store", default=recent_working_day, help="The default value is " + recent_working_day + ", the format is YYYYMMDD")
 parser.add_option("--stock_id", "-i", dest="stock_id", action="store", help="--stock_id|-i is optional")
