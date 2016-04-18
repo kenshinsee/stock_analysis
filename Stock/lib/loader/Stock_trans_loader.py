@@ -70,14 +70,17 @@ class Stock_trans_loader(threading.Thread):
         self.delete_existing_records()
         try:
             if self.enable_copy:
+                print_log('psql copy...')
                 psql_copy_from(DB_NAME, 'dw.stock_transaction', self.file, args=' with (encoding \'GBK\')')
             else:
+                print_log('psql insert...')
                 inserter(self.conn, TABLE, COLS, 'file', self.file, '\t')
             self.log_load_end(is_success=True)
+            print_log('Loading {stock_id} for {date} completes successfully.'.format(stock_id=self.stock_id, date=self.date))
         except:
             traceback.print_exc()
             self.log_load_end(is_success=False)
-            raise RuntimeError('Load {stock_id} for {date} failed.'.format(stock_id=self.stock_id, date=self.date))
+            raise RuntimeError('Loading {stock_id} for {date} failed.'.format(stock_id=self.stock_id, date=self.date))
         finally:
             queue_name = self.queue.get()
     
