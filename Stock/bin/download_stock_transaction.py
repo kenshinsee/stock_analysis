@@ -42,17 +42,14 @@ parser.add_option("--mode", "-m", dest="mode", action="store", default='download
 parser.add_option("--start_date", "-s", dest="start_date", action="store", default=recent_working_day, help="The default value is " + recent_working_day + ", the format is YYYYMMDD")
 parser.add_option("--end_date", "-e", dest="end_date", action="store", default=recent_working_day, help="The default value is " + recent_working_day + ", the format is YYYYMMDD")
 parser.add_option("--stock_id", "-i", dest="stock_id", action="store", help="--stock_id|-i is optional")
+parser.add_option("--obj_selection", "-o", dest="obj_selection", action="store", help="--obj_selection|-o can indicate which object interface you want to use, T:Tengxun, S:Sina, N:Netease, e.g. -o \"T|S\"")
 parser.add_option("--enable_copy", "-c", dest="enable_copy", action="store_true", default=True if platform.system() == 'Linux' else False, help="Enable postgres copy when loading data into table")
 (options, args) = parser.parse_args()
 
 #-- function
-def exit_process():
-    os.system("python " + FILE_NAME + " -h")
-    sys.exit()
-    
 def exit_error(msg):
     error_log(msg)
-    sys.exit()
+    raise RuntimeError(msg)
 
 def get_stock_list(conn, biz_date, stock_id):
     # get stock list from db
@@ -76,9 +73,20 @@ def get_stock_list(conn, biz_date, stock_id):
         stocks.append(row['id'])
     return stocks
 
-def downloader(queue, conn, start_date=options.start_date, end_date=options.end_date, stock_id=options.stock_id):
+def downloader(queue, conn, start_date=options.start_date, end_date=options.end_date, stock_id=options.stock_id, obj_selection=options.obj_selection):
     #-- object list
-    stock_objects = ['Tengxun_stock_transaction', 'Netease_stock_transaction', 'Sina_stock_transaction']
+    obj_mapping = {
+        'T': 'Tengxun_stock_transaction',
+        'N': 'Netease_stock_transaction',
+        'S': 'Sina_stock_transaction',
+    }
+    if obj_selection is None:
+        stock_objects = ['Tengxun_stock_transaction', 'Netease_stock_transaction', 'Sina_stock_transaction']
+    else:
+        stock_objects = [ obj_mapping[o] for o in obj_selection.split('|') if o in obj_mapping ]
+    
+    print_log('|'.join(stock_objects) + ' selected.')
+    
     iter = len(stock_objects)
     
     cur_date_dt = datetime.datetime.strptime(start_date,'%Y%m%d')
@@ -104,7 +112,7 @@ def downloader(queue, conn, start_date=options.start_date, end_date=options.end_
         time.sleep(1)
 
         
-def download_log_checker(conn, start_date=options.start_date, end_date=options.end_date):
+def download_log_checker(conn, start_date=options.start_date, end_date=options.end_date, stock_id=options.stock_id):
     start_date_dt = datetime.datetime.strptime(start_date,'%Y%m%d')
     end_date_dt = datetime.datetime.strptime(end_date,'%Y%m%d')
     
@@ -122,7 +130,8 @@ def download_log_checker(conn, start_date=options.start_date, end_date=options.e
     where biz_date between '{start_date}' and '{end_date}' 
     ) t where t.rankid = 1
     and t.is_download_success = 'N' '''.format(start_date=start_date_dt, end_date=end_date_dt)
-    
+    if not stock_id is None: chk_sql = chk_sql + ' and t.stock_id = \'' + stock_id + '\''
+
     cur = get_cur(conn)
     cur.execute(chk_sql)
     rows = list(cur)
@@ -131,6 +140,30 @@ def download_log_checker(conn, start_date=options.start_date, end_date=options.e
     else:
         for row in rows:
             error_log(str(row['biz_date']) + ':' + row['stock_id'] + ' failed to download.')
+    return len(rows)
+
+
+def load_log_checker(conn, start_date=options.start_date, end_date=options.end_date, stock_id=options.stock_id):
+    start_date_dt = datetime.datetime.strptime(start_date,'%Y%m%d')
+    end_date_dt = datetime.datetime.strptime(end_date,'%Y%m%d')
+
+    chk_sql = '''
+    select biz_date, stock_id
+    from dw.log_stock_transaction
+    where biz_date between '{start_date}' and '{end_date}'
+    and is_download_success = 'Y'
+    and (is_load_success = 'N' or is_load_success is null)
+    '''.format(start_date=start_date_dt, end_date=end_date_dt)
+    if not stock_id is None: chk_sql = chk_sql + ' and stock_id = \'' + stock_id + '\''
+
+    cur = get_cur(conn)
+    cur.execute(chk_sql)
+    rows = list(cur)
+    if len(rows) == 0:
+        print_log('All the stocks have been loaded successfully.')
+    else:
+        for row in rows:
+            error_log(str(row['biz_date']) + ':' + row['stock_id'] + ' failed to load.')
     return len(rows)
 
     
@@ -196,7 +229,7 @@ if options.mode == 'download' or options.mode == 'downloadAndLoad':
         print_log('=================> waiting for 10 seconds to start the next round run...')
         time.sleep(10)
     #-- retry 3 times, still failed, raise runtime error
-    if error_num > 0: raise RuntimeError('There are {num} stocks failed to download, please check.' . format(num=error_num))
+    if error_num > 0: exit_error('There are {num} stocks failed to download, please check.' . format(num=error_num))
     #queue.task_done()
 
 #-- upsize queue size to speed up data loading 
@@ -209,9 +242,13 @@ if options.mode == 'load' or options.mode == 'downloadAndLoad':
         print_log('loader running for the {n} time...' . format(n=i))
         print_log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
         loader(queue, conn)
+        error_num = load_log_checker(conn)
+        if error_num == 0: break
         print_log('=================> waiting for 10 seconds to start the next round run...')
         time.sleep(10)
-
+    #-- retry 3 times, still failed, raise runtime error
+    if error_num > 0: exit_error('There are {num} stocks failed to load, please check.' . format(num=error_num))
+    #queue.task_done()
 
 #-- close connection
 conn.commit()

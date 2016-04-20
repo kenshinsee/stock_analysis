@@ -39,13 +39,9 @@ parser.add_option("--stock_id", "-i", dest="stock_id", action="store", help="--s
 (options, args) = parser.parse_args()
 
 #-- function
-def exit_process():
-    os.system("python " + FILE_NAME + " -h")
-    sys.exit()
-    
 def exit_error(msg):
     error_log(msg)
-    sys.exit()
+    raise RuntimeError(msg)
 
 def get_stock_list(conn):
     # get stock list from db
@@ -100,11 +96,9 @@ else:
     print_log(options.object_class + ' selected.')
 
 # check validation of mode and input file
-if not (options.mode == 'download' or options.mode == 'load' or options.mode == 'downloadAndLoad'):
+if not options.mode in ('download', 'load', 'downloadAndLoad'):
     exit_error(mode + ' is not recognized, it could be download|load|downloadAndLoad.')
-elif options.mode == 'load' and options.file is None:
-    exit_error('--file|-f is required when in load mode.')
-elif options.mode == 'load' and not options.file is None and not os.path.exists(options.file):
+elif not options.file is None and not os.path.exists(options.file):
     exit_error(options.file + ' doesn\'t exist.')
     
 # check validation of start_date and end_date
@@ -116,19 +110,21 @@ if options.object_class == 'yahoo' and options.mode == 'download':
 
     
 #-- data file name
+if options.object_class == 'yahoo':
+    file_name = '{object_class}_{start_date}_{end_date}_{stock_id}.txt'.format(object_class = options.object_class, start_date = options.start_date, end_date = options.end_date, stock_id = 'all' if options.stock_id is None else options.stock_id)
+else:
+    file_name = '{object_class}_{recent_working_day}_{stock_id}.txt'.format(object_class = options.object_class, recent_working_day = recent_working_day, stock_id = 'all' if options.stock_id is None else options.stock_id)
+    
+#file_full_name = return_new_name_for_existing_file(data_dir + SEP + file_name)
+file_full_name = data_dir + SEP + file_name
+file_name = os.path.basename(file_full_name)
 
-if options.mode == 'load':
+# in load mode, it allows users to load a specific file
+if options.mode == 'load' and not options.file is None:
     file_full_name = options.file
     file_name = os.path.basename(file_full_name)
-else:
-    if options.object_class == 'yahoo':
-        file_name = '{object_class}_{start_date}_{end_date}_{stock_id}.txt'.format(object_class = options.object_class, start_date = options.start_date, end_date = options.end_date, stock_id = 'all' if options.stock_id is None else options.stock_id)
-    else:
-        file_name = '{object_class}_{recent_working_day}_{stock_id}.txt'.format(object_class = options.object_class, recent_working_day = recent_working_day, stock_id = 'all' if options.stock_id is None else options.stock_id)
-        
-    file_full_name = return_new_name_for_existing_file(data_dir + SEP + file_name)
-    file_name = os.path.basename(file_full_name)
 
+    
 #-- open log files
 log_file = LOG_DIR + SEP + file_name.replace('.txt', '.' + str(now) + '.log')
 warn_file = LOG_DIR + SEP + file_name.replace('.txt', '.' + str(now) + '.warn')

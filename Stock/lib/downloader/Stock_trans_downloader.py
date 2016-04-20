@@ -76,9 +76,9 @@ class Stock_trans_downloader(threading.Thread):
         self.insert_log_table()
         try:
             download_file = self.download_to_local()
-            self.update_log_table(is_success=True)
             self.save_formatted_data()
             os.remove(download_file) 
+            self.update_log_table(is_success=True)
         except:
             traceback.print_exc()
             self.update_log_table(is_success=False)

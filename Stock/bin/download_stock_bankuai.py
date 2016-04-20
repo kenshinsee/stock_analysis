@@ -82,16 +82,11 @@ end_date = options.end_date
 #-- function
 def exit_error(msg):
     error_log(msg)
-    sys.exit()
+    raise RuntimeError(msg)
     
-def exit_process():
-	os.system("python " + FILE_NAME + " -h")
-	sys.exit()
-	
 def exit_for_none_var(var):
 	if eval("options." + var) is None:
-		error_log(var + " must be assigned!")
-		exit_process()
+		exit_error(var + " must be assigned!")
 		
 def return_parent_bankuai_ids(db_conn):
 	query = "SELECT ID, NAME FROM DW.DIM_PARENT_BANKUAI"
@@ -113,11 +108,9 @@ if not options.mode in ('download', 'load', 'downloadAndLoad'):
     exit_error(mode + ' is not recognized, it could be download|load|downloadAndLoad.')
 
 if not (re.match("^\d{8}$", start_date) and re.match("^\d{8}$", end_date)):
-	error_log("start_date or end_date error! [" + start_date + "][" + end_date + "]")
-	exit_process()
+	exit_error("start_date or end_date error! [" + start_date + "][" + end_date + "]")
 elif start_date > end_date:
-	error_log("start_date must be smaller than end_date! [" + start_date + "][" + end_date + "]")
-	exit_process()
+	exit_error("start_date must be smaller than end_date! [" + start_date + "][" + end_date + "]")
 
 
 #------------------------------------------- Downloading
@@ -140,14 +133,12 @@ if options.mode in ('downloadAndLoad', 'load'):
         elif options.table in table_mapping:
             files_to_load = {options.table: table_mapping[options.table]["file"]}
         else: 
-            error_log("table is not correct! [" + options.table + "]")
-            exit_process()
+            exit_error("table is not correct! [" + options.table + "]")
     else:
         if options.table in table_mapping:
             files_to_load = {options.table: [options.in_file]}
         else:
-            error_log("table is not correct! [" + options.table + "]")
-            exit_process()
+            exit_error("table is not correct! [" + options.table + "]")
 
     #-- replace $DATE, it will check the existence of files, if file doesn't exist, it wouldn't be added to the loading list
     start_dt_dt = datetime.datetime.strptime(start_date, "%Y%m%d")
