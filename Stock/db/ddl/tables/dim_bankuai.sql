@@ -6,5 +6,5 @@ create table dw.dim_bankuai(
   upd_time timestamp,
   is_valid varchar(1) --Y/N
 );
-create index uidx_bankuai_nm on dw.dim_bankuai(name);
+create index dw.uidx_bankuai_nm on dw.dim_bankuai(name);
 alter table dw.dim_bankuai add constraint fk_parent_bankuai_id foreign key(parent_bankuai_id) references dw.dim_parent_bankuai(id);
