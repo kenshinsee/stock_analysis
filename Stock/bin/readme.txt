@@ -15,3 +15,6 @@
 -> https://pypi.python.org/pypi/xlrd
 -> wget https://pypi.python.org/packages/source/x/xlrd/xlrd-0.9.4.tar.gz
 -> python setup.py install
+
+# Install taskflow
+-> pip install taskflow

@@ -121,14 +121,14 @@ if options.mode in ('download', 'downloadAndLoad'):
     if os.path.exists(bkbkfile_full_name):
         bk_bkbkfile_full_name = bkbkfile_full_name + "." + datetime.datetime.now().strftime("%Y%m%d%H%M%S")
         os.rename(bkbkfile_full_name, bk_bkbkfile_full_name) #rename
-        print_log(bkbkfile_full_name + " renamed to " + bk_bkbkfile_full_name)
+        print_log('The original file ' + bkbkfile_full_name + " has been renamed to " + bk_bkbkfile_full_name)
     e.export_bankuai_status(bkbkfile_full_name)
 	
     bkstfile_full_name = Sys_paths.DATA_STOCK_BANKUAI_DAILY + Sys_paths.SEP + 'bankuai_stock_' + recent_working_day + '.csv'
     if os.path.exists(bkstfile_full_name):
         bk_bkstfile_full_name = bkstfile_full_name + "." + datetime.datetime.now().strftime("%Y%m%d%H%M%S")
         os.rename(bkstfile_full_name, bk_bkstfile_full_name) #rename
-        print_log(bkstfile_full_name + " renamed to " + bk_bkstfile_full_name)
+        print_log('The original file ' + bkstfile_full_name + " has been renamed to " + bk_bkstfile_full_name)
     e.export_bankuai_stock(bkstfile_full_name)
     
 #------------------------------------------- LOADing

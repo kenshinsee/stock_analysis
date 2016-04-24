@@ -115,9 +115,13 @@ if options.object_class == 'yahoo':
 else:
     file_name = '{object_class}_{recent_working_day}_{stock_id}.txt'.format(object_class = options.object_class, recent_working_day = recent_working_day, stock_id = 'all' if options.stock_id is None else options.stock_id)
     
-#file_full_name = return_new_name_for_existing_file(data_dir + SEP + file_name)
 file_full_name = data_dir + SEP + file_name
 file_name = os.path.basename(file_full_name)
+# if file exists, rename the original file
+if os.path.exists(file_full_name):
+    bk_file_full_name = file_full_name + "." + datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+    os.rename(file_full_name, bk_file_full_name) #rename
+    print_log('The original file ' + file_full_name + " has been renamed to " + bk_file_full_name)
 
 # in load mode, it allows users to load a specific file
 if options.mode == 'load' and not options.file is None:
