@@ -27,7 +27,7 @@ DB_YML = YML_DIR + SEP + "db.yml"
 STOCK_YML = YML_DIR + SEP + "table" + SEP + "dw.stock_transaction.yml"
 now = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 QUEUE_DOWNLOAD_MAX_SIZE = 3
-QUEUE_LOAD_MAX_SIZE = 4
+QUEUE_LOAD_MAX_SIZE = 2
 
 #-- fetch DB info
 db_dict = get_yaml(DB_YML)
@@ -43,7 +43,8 @@ parser.add_option("--start_date", "-s", dest="start_date", action="store", defau
 parser.add_option("--end_date", "-e", dest="end_date", action="store", default=recent_working_day, help="The default value is " + recent_working_day + ", the format is YYYYMMDD")
 parser.add_option("--stock_id", "-i", dest="stock_id", action="store", help="--stock_id|-i is optional")
 parser.add_option("--obj_selection", "-o", dest="obj_selection", action="store", help="--obj_selection|-o can indicate which object interface you want to use, T:Tengxun, S:Sina, N:Netease, e.g. -o \"T|S\"")
-parser.add_option("--enable_copy", "-c", dest="enable_copy", action="store_true", default=True if platform.system() == 'Linux' else False, help="Enable postgres copy when loading data into table")
+#parser.add_option("--enable_copy", "-c", dest="enable_copy", action="store_true", default=True if platform.system() == 'Linux' else False, help="Enable postgres copy when loading data into table")
+parser.add_option("--enable_copy", "-c", dest="enable_copy", action="store_true", default=True, help="Enable postgres copy when loading data into table")
 (options, args) = parser.parse_args()
 
 #-- function

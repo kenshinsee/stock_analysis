@@ -19,6 +19,10 @@ DATA_DIR = Sys_paths.DATA_STOCK_TRANSACTION
 TABLE = 'dw.stock_transaction'
 COLS = 'stock_id,biz_date,time,trans_price,price_change,volume,amount,buy_sell,source'
 DB_NAME = get_yaml(DB_YML)["DB"]
+DB_HOST = get_yaml(DB_YML)["Host"]
+DB_PORT = get_yaml(DB_YML)["Port"]
+DB_UNAME = get_yaml(DB_YML)["Username"]
+DB_PWD = get_yaml(DB_YML)["Password"]
 
 class Stock_trans_loader(threading.Thread):
     def __init__(self, queue, conn, log_row_id, stock_id, date, file=None, enable_copy=False):
@@ -71,7 +75,7 @@ class Stock_trans_loader(threading.Thread):
         try:
             if self.enable_copy:
                 print_log('psql copy...')
-                psql_copy_from(DB_NAME, 'dw.stock_transaction', self.file, args=' with (encoding \'GBK\')')
+                psql_copy_from(DB_HOST, DB_NAME, DB_UNAME, 'dw.stock_transaction', self.file, DB_PORT, args=' with (encoding \'GBK\')')
             else:
                 print_log('psql insert...')
                 inserter(self.conn, TABLE, COLS, 'file', self.file, '\t')
@@ -92,7 +96,7 @@ if __name__ == '__main__':
     #-- open db connection
     conn = get_conn(db_dict["DB"], db_dict["Username"], db_dict["Password"], db_dict["Host"], db_dict["Port"])
 
-    s = Stock_trans_loader(queue, conn, '57', '300250', "20160401", enable_copy=True)
+    s = Stock_trans_loader(queue, conn, '32870', '300250', "20160426", enable_copy=True)
     s.start()
     s.join()
     

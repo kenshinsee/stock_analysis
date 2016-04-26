@@ -136,8 +136,8 @@ def inserter(conn, tabname, colnames, source_type, value, delimiter):
     print_log('Insertion for {0} is done.'.format(tabname))
     
 
-def psql_copy_from(dbname, table, file, args=' with (encoding \'GBK\')'):
-    cmd = 'psql -d {dbname} -c "\\copy {table} from \'{file}\' {args}"' . format(dbname=dbname, table=table, file=file, args=args)
+def psql_copy_from(host, dbname, username, table, file, port=5432, args=' with (encoding \'GBK\')'):
+    cmd = 'psql -h {host} -p {port} -d {dbname} -U {username} -c "\\copy {table} from \'{file}\' {args}"' . format(host=host, port=port, dbname=dbname, username=username, table=table, file=file, args=args)
     os.system(cmd)
 
     
