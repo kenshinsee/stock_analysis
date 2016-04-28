@@ -13,3 +13,4 @@ create table dw.stock_transaction(
 );
 --alter table dw.stock_transaction add constraint fk_buy_sell foreign key(buy_sell) references dw.dim_buy_sell(id);
 alter table dw.stock_transaction add constraint fk_stock_id foreign key(stock_id) references dw.dim_stock(id);
+create index idx_stock_transaction1 on dw.stock_transaction(biz_date);

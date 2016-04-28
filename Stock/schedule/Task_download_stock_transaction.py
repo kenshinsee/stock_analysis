@@ -12,6 +12,6 @@ SEP = Sys_paths.SEP
 class Task_download_stock_transaction(Task):
 
     def set_command(self):
-        self.cmd = 'python ' + BIN_DIR + SEP + 'download_stock_transaction.py'
+        self.cmd = 'python ' + BIN_DIR + SEP + 'download_stock_transaction.py -o "S|N"'
 
         
