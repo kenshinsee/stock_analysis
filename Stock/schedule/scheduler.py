@@ -54,7 +54,8 @@ jobs = {
     'download_stock_transaction': Task_download_stock_transaction('download_stock_transaction'),
 }
 
-job_run_seq = ['download_stock_bankuai', 'recon_stock_bankuai', 'download_stock_eod', 'download_stock_transaction']
+#job_run_seq = ['download_stock_bankuai', 'recon_stock_bankuai', 'download_stock_eod', 'download_stock_transaction']
+job_run_seq = ['download_stock_bankuai', 'recon_stock_bankuai', 'download_stock_eod']
 job_to_run = []
 
 # determine which jobs need to run
@@ -73,5 +74,8 @@ for job in job_to_run:
 engine  = taskflow.engines.load(flow)
 engine.notifier.register('*', flow_watch)
 engine.task_notifier.register('*', task_watch)
-engine.run()
+try:
+    engine.run()
+except Exception as ex:
+    error_log(ex.message)
     

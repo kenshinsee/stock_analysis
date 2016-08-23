@@ -49,7 +49,9 @@ class Task(task.Task):
     def post_execute(self):
         self.conn.commit()
 
-        
+    def revert(self, *args, **kwargs):
+        error_log('[FAILED] ' + self.cmd)
+
         
 if __name__ == "__main__":
     import taskflow.engines

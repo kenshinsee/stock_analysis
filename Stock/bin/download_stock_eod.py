@@ -2,7 +2,7 @@
 #coding:utf-8
 # This script is used to download the eod data to flat file and load data from flat file to db
 
-import sys,os,re,datetime
+import sys,os,re,datetime,time
 
 from optparse import OptionParser
 from urllib2 import HTTPError
@@ -63,14 +63,22 @@ def download_to_file(stocks, stock_obj_name, start_date, end_date, to_file, log_
         try:
             new_class = '%(object)s("%(stock)s", "%(start_date)s", "%(end_date)s")' % {'object': stock_obj_name, 'stock': s, 'start_date':start_date if stock_obj_name == 'Yahoo_stock' else 'dummy', 'end_date':end_date if stock_obj_name == 'Yahoo_stock' else 'dummy'}
             print_log(new_class)
-            obj = eval(new_class)
-            for k,v in obj.get_stock_content().items():
-                print_log('Writing %(code)s ...' % {'code': k}, log_fh )
-                if re.match(r'pv_none_match', v) or re.match(r'.+"";$', v): # match empty from tengxun and sina
-                    warn_log('No content fetched for ' + k, warn_fh)
-                else:
-                    fh.write(v + '\n')
-                    num += 1
+            
+            while True: # Infinite loop unitl stock download completes successfully
+                try:
+                    obj = eval(new_class)
+                    for k,v in obj.get_stock_content().items():
+                        print_log('Writing %(code)s ...' % {'code': k}, log_fh )
+                        if re.match(r'pv_none_match', v) or re.match(r'.+"";$', v): # match empty from tengxun and sina
+                            warn_log('No content fetched for ' + k, warn_fh)
+                        else:
+                            fh.write(v + '\n')
+                            num += 1
+                    break
+                except:
+                    warn_log('Connection lost, retry in 10 seconds ...')
+                    time.sleep(10)
+                    
         except KeyError:
             warn_log(s[0:2] + ' is not setup in ' + stock_obj_name, warn_fh)
             continue

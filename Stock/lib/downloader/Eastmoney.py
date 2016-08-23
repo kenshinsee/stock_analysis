@@ -125,7 +125,9 @@ class Eastmoney:
         p_page_size = "&pageSize=%(page_size)s"
         p_page = "&page=%(page)s"
         p_bankuai_code = "&style=%(bankuai_code)s" 
-        return ( base_url + p_page_size + p_page + p_bankuai_code ) % {"page_size": page_size, "page": page, "bankuai_code": return_bankuai_code(bankuai_tree, bankuai)}
+        bankuai_url = ( base_url + p_page_size + p_page + p_bankuai_code ) % {"page_size": page_size, "page": page, "bankuai_code": return_bankuai_code(bankuai_tree, bankuai)}
+        print_log(bankuai_url) 
+        return bankuai_url
 
     
     def return_url_for_bankuai_bankuai(self, bankuai):
@@ -275,12 +277,14 @@ class Eastmoney:
 if __name__ == "__main__":
 
     e = Eastmoney()
+    #print e.bankuai_tree
+    print e.return_url_for_bankuai_stock([u'板块',u'概念板块',u'AB股票'])
     
-    today = get_date('today')
-    
-    bkbkfile_name = 'bankuai_' + today + '.csv'
-    return_list = e.export_bankuai_status( Sys_paths.DATA_STOCK_BANKUAI_DAILY + Sys_paths.SEP + bkbkfile_name)
-	
-    bkstfile_name = 'bankuai_stock_' + today + '.csv'
-    return_dict = e.export_bankuai_stock( Sys_paths.DATA_STOCK_BANKUAI_DAILY + Sys_paths.SEP + bkstfile_name)
+    #today = get_date('today')
+    #
+    #bkbkfile_name = 'bankuai_' + today + '.csv'
+    #return_list = e.export_bankuai_status( Sys_paths.DATA_STOCK_BANKUAI_DAILY + Sys_paths.SEP + bkbkfile_name)
+	#
+    #bkstfile_name = 'bankuai_stock_' + today + '.csv'
+    #return_dict = e.export_bankuai_stock( Sys_paths.DATA_STOCK_BANKUAI_DAILY + Sys_paths.SEP + bkstfile_name)
     

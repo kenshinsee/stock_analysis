@@ -12,6 +12,7 @@ SEP = Sys_paths.SEP
 class Task_download_stock_eod(Task):
 
     def set_command(self):
-        self.cmd = 'python ' + BIN_DIR + SEP + 'download_stock_eod.py'
+        self.cmd = 'python ' + BIN_DIR + SEP + 'download_stock_eod.py -o sina'
+        #self.cmd = 'python ' + BIN_DIR + SEP + 'download_stock_eod.py'
 
         
