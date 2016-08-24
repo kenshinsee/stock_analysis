@@ -24,7 +24,7 @@
 import re,sys,pprint,copy,csv,os
 reload(sys)
 sys.setdefaultencoding("gbk")
-from tooling.common_tool import print_log, read_url, get_date, return_new_name_for_existing_file
+from tooling.common_tool import print_log, warn_log, read_url, get_date, return_new_name_for_existing_file
 from Sys_paths import Sys_paths
 
 class Eastmoney:
@@ -155,8 +155,14 @@ class Eastmoney:
             raise RuntimeError,("The url of [" + ",".join(bankuai) + "] is not correct.","in Eastmoney.py")
         
         bankuai_detail_url = self.return_url_for_bankuai_stock(bankuai)
-        bankuai_detail_page = read_url(bankuai_detail_url)
-
+        while True: # Infinite loop unitl stock download completes successfully
+            try:
+                bankuai_detail_page = read_url(bankuai_detail_url)
+                break
+            except:
+                warn_log('Connection lost, retry in 10 seconds ...')
+                time.sleep(10)                
+                
         r_return_code_detail_grp = r'\[(?P<code_detail_grp>.*)\]'
         code_detail_grp = re.search(r_return_code_detail_grp, bankuai_detail_page).group("code_detail_grp")
 
@@ -186,8 +192,14 @@ class Eastmoney:
             raise RuntimeError,("Incorrect parameter [%(direction)s]" % {"direction": sort_direction},"in Eastmoney.py")
             
         bankuai_url = self.return_url_for_bankuai_bankuai(bankuai)
-        bankuai_page = read_url(bankuai_url)
-        
+        while True: # Infinite loop unitl stock download completes successfully
+            try:
+                bankuai_page = read_url(bankuai_url)
+                break
+            except:
+                warn_log('Connection lost, retry in 10 seconds ...')
+                time.sleep(10)
+                
         r_return_bankuai_detail_grp = r'\[\[(?P<bankuai_detail_group_desc>[^\]]+)\],\[(?P<bankuai_detail_group_asc>[^\]]+)\]\]'
         match_objs = re.search(r_return_bankuai_detail_grp, bankuai_page)
         bankuai_detail_grp = match_objs.group("bankuai_detail_group_" + sort_direction)
