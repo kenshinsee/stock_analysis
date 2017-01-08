@@ -56,7 +56,7 @@ class Stock_trans_downloader(threading.Thread):
 
     def download_to_local(self):
         # save raw data into local
-        # if file already exists and size >= 5KB, it doesn't download again.
+        # if file already exists and size >= 5KB, it won't be downloaded again.
         if os.path.exists(self.stock_trans_object.download_file) and os.path.getsize(self.stock_trans_object.download_file) >= 1024 * 5:
             print_log(self.stock_trans_object.download_file + ' already exists.')
         else:

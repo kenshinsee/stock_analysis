@@ -68,7 +68,7 @@ def download_to_file(stocks, stock_obj_name, start_date, end_date, to_file, log_
                 try:
                     obj = eval(new_class)
                     for k,v in obj.get_stock_content().items():
-                        print_log('Writing %(code)s ...' % {'code': k}, log_fh )
+                        print_log('%(num)s - Writing %(code)s ...' % {'num': num, 'code': k}, log_fh )
                         if re.match(r'pv_none_match', v) or re.match(r'.+"";$', v): # match empty from tengxun and sina
                             warn_log('No content fetched for ' + k, warn_fh)
                         else:
@@ -126,7 +126,7 @@ else:
 file_full_name = data_dir + SEP + file_name
 file_name = os.path.basename(file_full_name)
 # if file exists, rename the original file
-if os.path.exists(file_full_name):
+if os.path.exists(file_full_name) and options.mode != 'load':
     bk_file_full_name = file_full_name + "." + datetime.datetime.now().strftime("%Y%m%d%H%M%S")
     os.rename(file_full_name, bk_file_full_name) #rename
     print_log('The original file ' + file_full_name + " has been renamed to " + bk_file_full_name)
