@@ -19,6 +19,10 @@
 # Install taskflow
 -> pip install taskflow
 
+# Install yahoo stock
+-> pip install yahoo-finance
+https://pypi.python.org/pypi/yahoo-finance/1.1.4
+
 # Install Flask
 -> pip install flask
 -> pip install flask-login

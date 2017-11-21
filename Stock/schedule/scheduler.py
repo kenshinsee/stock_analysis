@@ -73,7 +73,7 @@ for job in job_to_run:
 
 engine  = taskflow.engines.load(flow)
 engine.notifier.register('*', flow_watch)
-engine.task_notifier.register('*', task_watch)
+#engine.task_notifier.register('*', task_watch)
 try:
     engine.run()
 except Exception as ex:
